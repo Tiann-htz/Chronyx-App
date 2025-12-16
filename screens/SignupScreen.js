@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = 'https://qr-logix.vercel.app/api/qrlogixApi';
+const API_URL = 'https://qr-logix.vercel.app/api/chronyxApi';
 
 export default function SignupScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
