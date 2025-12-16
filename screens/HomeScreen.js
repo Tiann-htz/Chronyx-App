@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import QRCodeModal from '../components/QRCodeModal';
 import axios from 'axios';
 
-const API_URL = 'https://qr-logix.vercel.app/api/chronyxApi';
+const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
 
 export default function HomeScreen() {
   const { user, logout } = useAuth();
