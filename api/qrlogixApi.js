@@ -188,6 +188,112 @@ module.exports = async (req, res) => {
       }
     }
 
+    // CREATE QR CODE ENDPOINT
+    if (endpoint === 'create-qr' && req.method === 'POST') {
+      const { userId, firstName, lastName, email } = req.body;
+
+      if (!userId || !firstName || !lastName || !email) {
+        return res.status(400).json({
+          success: false,
+          message: 'All fields are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Check if user already has a QR code
+        const [existingQR] = await connection.execute(
+          'SELECT * FROM user_qr WHERE user_id = ?',
+          [userId]
+        );
+
+        if (existingQR.length > 0) {
+          connection.release();
+          return res.status(200).json({
+            success: true,
+            message: 'User already has a QR code',
+            qrCode: existingQR[0].qr_code,
+          });
+        }
+
+        // Generate unique QR code (format: QL-USERID-TIMESTAMP)
+        const timestamp = Date.now();
+        const qrCode = `QL-${userId}-${timestamp}`;
+
+        // Insert QR code
+        await connection.execute(
+          'INSERT INTO user_qr (user_id, qr_code, first_name, last_name, email) VALUES (?, ?, ?, ?, ?)',
+          [userId, qrCode, firstName, lastName, email]
+        );
+
+        connection.release();
+
+        return res.status(201).json({
+          success: true,
+          message: 'QR code created successfully',
+          qrCode: qrCode,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // CHECK QR CODE ENDPOINT
+    if (endpoint === 'check-qr' && req.method === 'GET') {
+      const { userId } = req.query;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        const [qrRecords] = await connection.execute(
+          'SELECT qr_code, is_active, created_at FROM user_qr WHERE user_id = ?',
+          [userId]
+        );
+
+        connection.release();
+
+        if (qrRecords.length === 0) {
+          return res.status(200).json({
+            success: true,
+            hasQR: false,
+            qrCode: null,
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          hasQR: true,
+          qrCode: qrRecords[0].qr_code,
+          isActive: qrRecords[0].is_active,
+          createdAt: qrRecords[0].created_at,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+   
     // If no endpoint matches
     return res.status(404).json({
       success: false,

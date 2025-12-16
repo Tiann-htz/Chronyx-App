@@ -45,17 +45,33 @@ export default function SignupScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}?endpoint=signup`, {
+      // Step 1: Create user account
+      const signupResponse = await axios.post(`${API_URL}?endpoint=signup`, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim().toLowerCase(),
         password: password,
       });
 
-      if (response.data.success) {
-        // Create user object
+      if (signupResponse.data.success) {
+        const userId = signupResponse.data.userId;
+
+        // Step 2: Create QR code for the new user
+        try {
+          await axios.post(`${API_URL}?endpoint=create-qr`, {
+            userId: userId,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim().toLowerCase(),
+          });
+        } catch (qrError) {
+          console.error('QR creation error:', qrError);
+          // Continue even if QR creation fails
+        }
+
+        // Step 3: Create user object and auto-login
         const newUser = {
-          id: response.data.userId,
+          id: userId,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           email: email.trim().toLowerCase(),
@@ -64,14 +80,12 @@ export default function SignupScreen({ navigation }) {
 
         Alert.alert(
           'Success!', 
-          'Account created successfully!',
+          'Account created successfully! Your QR code has been generated.',
           [
             {
               text: 'OK',
               onPress: async () => {
-                // Save user data using auth context
                 await login(newUser);
-                // Navigation will happen automatically via AuthContext
               }
             }
           ]

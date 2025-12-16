@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,72 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import QRCodeModal from '../components/QRCodeModal';
+import axios from 'axios';
+
+const API_URL = 'https://qr-logix.vercel.app/api/qrlogixApi';
 
 export default function HomeScreen() {
   const { user, logout } = useAuth();
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [checkingQR, setCheckingQR] = useState(true);
+
+  // Check if user has QR on component mount
+  useEffect(() => {
+    checkUserQR();
+  }, []);
+
+  const checkUserQR = async () => {
+    try {
+      setCheckingQR(true);
+      const response = await axios.get(
+        `${API_URL}?endpoint=check-qr&userId=${user.id}`
+      );
+
+      if (response.data.success && response.data.qrCode) {
+        setQrData(response.data.qrCode);
+      }
+    } catch (error) {
+      console.error('Error checking QR:', error);
+    } finally {
+      setCheckingQR(false);
+    }
+  };
+
+  const handleCreateQR = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}?endpoint=create-qr`, {
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      });
+
+      if (response.data.success) {
+        setQrData(response.data.qrCode);
+        Alert.alert('Success', 'Your QR code has been created!');
+        setShowQRModal(true);
+      }
+    } catch (error) {
+      console.error('Error creating QR:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.message || 'Failed to create QR code'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShowQR = () => {
+    setShowQRModal(true);
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -25,7 +86,6 @@ export default function HomeScreen() {
           text: 'Logout',
           onPress: async () => {
             await logout();
-            // Navigation will happen automatically via AuthContext
           },
           style: 'destructive',
         },
@@ -45,6 +105,42 @@ export default function HomeScreen() {
           </Text>
           <View style={styles.userTypeBadge}>
             <Text style={styles.userTypeText}>{user?.userType}</Text>
+          </View>
+
+          {/* QR Code Button */}
+          <View style={styles.qrButtonContainer}>
+            {checkingQR ? (
+              <View style={styles.qrButton}>
+                <ActivityIndicator color="#fff" />
+                <Text style={styles.qrButtonText}>Loading...</Text>
+              </View>
+            ) : qrData ? (
+              <TouchableOpacity
+                style={styles.qrButton}
+                onPress={handleShowQR}
+              >
+                <Text style={styles.qrButtonIcon}>📱</Text>
+                <Text style={styles.qrButtonText}>View My QR Code</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.qrButton, styles.qrButtonCreate]}
+                onPress={handleCreateQR}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <ActivityIndicator color="#fff" />
+                    <Text style={styles.qrButtonText}>Creating...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.qrButtonIcon}>➕</Text>
+                    <Text style={styles.qrButtonText}>Create My QR ID</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -67,6 +163,12 @@ export default function HomeScreen() {
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Account Type:</Text>
             <Text style={styles.infoValue}>{user?.userType}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>QR Status:</Text>
+            <Text style={[styles.infoValue, qrData ? styles.statusActive : styles.statusInactive]}>
+              {qrData ? '✓ Active' : '✗ Not Created'}
+            </Text>
           </View>
         </View>
 
@@ -99,6 +201,14 @@ export default function HomeScreen() {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        visible={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        qrData={qrData || ''}
+        userName={`${user?.firstName} ${user?.lastName}`}
+      />
     </ScrollView>
   );
 }
@@ -134,12 +244,45 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     alignSelf: 'flex-start',
+    marginBottom: 16,
   },
   userTypeText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
+  },
+  qrButtonContainer: {
+    marginTop: 8,
+  },
+  qrButton: {
+    backgroundColor: '#2f855a',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  qrButtonCreate: {
+    backgroundColor: '#38a169',
+  },
+  qrButtonIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  qrButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   card: {
     backgroundColor: '#fff',
@@ -183,6 +326,14 @@ const styles = StyleSheet.create({
     color: '#718096',
     flex: 1,
     textAlign: 'right',
+  },
+  statusActive: {
+    color: '#48bb78',
+    fontWeight: '600',
+  },
+  statusInactive: {
+    color: '#f56565',
+    fontWeight: '600',
   },
   statsContainer: {
     flexDirection: 'row',
