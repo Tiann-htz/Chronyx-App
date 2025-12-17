@@ -5,6 +5,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
+import MyAccountScreen from './screens/MyAccountScreen';
+import PayrollScreen from './screens/PayrollScreen';
+import AttendanceScreen from './screens/AttendanceScreen';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
 const Stack = createStackNavigator();
@@ -12,53 +15,85 @@ const Stack = createStackNavigator();
 function AppNavigator() {
   const { user, loading } = useAuth();
 
-  // Show loading screen while checking auth status
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#48bb78" />
+        <ActivityIndicator size="large" color="#00d4ff" />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator 
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#2d3748',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
+      <Stack.Navigator>
         {user ? (
-          // User is logged in - show Home screen
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen}
-            options={{ 
-              title: 'Home',
-              headerLeft: () => null, // Prevent going back
-            }}
-          />
-        ) : (
-          // User is not logged in - show Login/Signup screens
+          // Authenticated Screens
           <>
-            <Stack.Screen 
-              name="Login" 
-              component={LoginScreen}
-              options={{ 
-                title: 'Login',
-                headerLeft: () => null, // Prevent going back
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#ffffff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'Dashboard',
+                headerLeft: () => null,
               }}
             />
-            <Stack.Screen 
-              name="Signup" 
+            <Stack.Screen
+              name="MyAccount"
+              component={MyAccountScreen}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#ffffff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'My Account',
+              }}
+            />
+            <Stack.Screen
+              name="Payroll"
+              component={PayrollScreen}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#ffffff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'My Payroll',
+              }}
+            />
+            <Stack.Screen
+              name="Attendance"
+              component={AttendanceScreen}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#ffffff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'My Attendance',
+              }}
+            />
+          </>
+        ) : (
+          // Auth Screens
+          <>
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'Login',
+                headerLeft: () => null,
+              }}
+            />
+            <Stack.Screen
+              name="Signup"
               component={SignupScreen}
-              options={{ title: 'Sign Up' }}
+              options={{
+                headerStyle: { backgroundColor: '#1a365d' },
+                headerTintColor: '#fff',
+                headerTitleStyle: { fontWeight: 'bold' },
+                title: 'Sign Up',
+              }}
             />
           </>
         )}
@@ -80,6 +115,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f7fafc',
+    backgroundColor: '#f8fafc',
   },
 });

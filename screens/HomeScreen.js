@@ -8,23 +8,39 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import QRCodeModal from '../components/QRCodeModal';
+import Sidebar from '../components/Sidebar';
 import axios from 'axios';
 
 const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
 
-export default function HomeScreen() {
-  const { user, logout } = useAuth();
+export default function HomeScreen({ navigation }) {
+  const { user } = useAuth();
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checkingQR, setCheckingQR] = useState(true);
 
-  // Check if user has QR on component mount
   useEffect(() => {
     checkUserQR();
   }, []);
+
+  // Add menu button to header
+  useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => setShowSidebar(true)}
+        >
+          <Ionicons name="menu" size={28} color="#ffffff" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const checkUserQR = async () => {
     try {
@@ -73,131 +89,166 @@ export default function HomeScreen() {
     setShowQRModal(true);
   };
 
-  
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            await logout();
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  // Get current date info
+  const getCurrentDate = () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const now = new Date();
+    return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeTitle}>
-            Welcome, {user?.firstName} {user?.lastName}!
-          </Text>
-          <Text style={styles.welcomeSubtitle}>
-            {user?.email}
-          </Text>
-         
-
-          {/* QR Code Button */}
-          <View style={styles.qrButtonContainer}>
-            {checkingQR ? (
-              <View style={styles.qrButton}>
-                <ActivityIndicator color="#fff" />
-                <Text style={styles.qrButtonText}>Loading...</Text>
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          {/* Welcome Container */}
+          <View style={styles.welcomeContainer}>
+            <View style={styles.welcomeHeader}>
+              <View style={styles.welcomeLeft}>
+                <Text style={styles.welcomeGreeting}>Welcome back,</Text>
+                <Text style={styles.welcomeTitle}>
+                  {user?.firstName} {user?.lastName}
+                </Text>
+                <Text style={styles.employeeId}>ID: {user?.id}</Text>
               </View>
-            ) : qrData ? (
-              <TouchableOpacity
-                style={styles.qrButton}
-                onPress={handleShowQR}
-              >
-                <Text style={styles.qrButtonIcon}>📱</Text>
-                <Text style={styles.qrButtonText}>View My QR Code</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.qrButton, styles.qrButtonCreate]}
-                onPress={handleCreateQR}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <ActivityIndicator color="#fff" />
-                    <Text style={styles.qrButtonText}>Creating...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.qrButtonIcon}>➕</Text>
-                    <Text style={styles.qrButtonText}>Create My QR ID</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Account Information</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>User ID:</Text>
-            <Text style={styles.infoValue}>{user?.id}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Name:</Text>
-            <Text style={styles.infoValue}>
-              {user?.firstName} {user?.lastName}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email:</Text>
-            <Text style={styles.infoValue}>{user?.email}</Text>
-          </View>
-          
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>QR Status:</Text>
-            <Text style={[styles.infoValue, qrData ? styles.statusActive : styles.statusInactive]}>
-              {qrData ? '✓ Active' : '✗ Not Created'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Dashboard</Text>
-          <Text style={styles.cardText}>
-            You're successfully logged in! Your dashboard features will be added here.
-          </Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Quick Stats</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Tasks</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Records</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Actions</Text>
+
+            {/* QR Code Button */}
+            <View style={styles.qrButtonContainer}>
+              {checkingQR ? (
+                <View style={[styles.qrButton, styles.qrButtonLoading]}>
+                  <ActivityIndicator color="#1a365d" />
+                  <Text style={styles.qrButtonText}>Loading...</Text>
+                </View>
+              ) : qrData ? (
+                <TouchableOpacity style={[styles.qrButton, styles.qrButtonActive]} onPress={handleShowQR}>
+                  <Ionicons name="qr-code" size={24} color="#ffffff" />
+                  <Text style={styles.qrButtonTextActive}>View My QR Code</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.qrButton, styles.qrButtonCreate]}
+                  onPress={handleCreateQR}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <ActivityIndicator color="#1a365d" />
+                      <Text style={styles.qrButtonText}>Creating...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="add-circle" size={24} color="#1a365d" />
+                      <Text style={styles.qrButtonText}>Create My QR ID</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           </View>
-        </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Today's Schedule Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="calendar-outline" size={24} color="#1a365d" />
+              <Text style={styles.cardTitle}>Today's Schedule</Text>
+            </View>
+            <Text style={styles.dateText}>{getCurrentDate()}</Text>
+            <View style={styles.scheduleItem}>
+              <View style={styles.scheduleTime}>
+                <Ionicons name="time-outline" size={20} color="#64748b" />
+                <Text style={styles.scheduleTimeText}>8:00 AM - 5:00 PM</Text>
+              </View>
+              <Text style={styles.scheduleLabel}>Regular Working Hours</Text>
+            </View>
+            <View style={styles.scheduleItem}>
+              <View style={styles.scheduleTime}>
+                <Ionicons name="location-outline" size={20} color="#64748b" />
+                <Text style={styles.scheduleTimeText}>Main Office</Text>
+              </View>
+              <Text style={styles.scheduleLabel}>Work Location</Text>
+            </View>
+          </View>
+
+          {/* Attendance & Stats Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="stats-chart" size={24} color="#1a365d" />
+              <Text style={styles.cardTitle}>Today's Attendance</Text>
+            </View>
+            
+            <View style={styles.statsGrid}>
+              <View style={styles.statBox}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="log-in-outline" size={28} color="#10b981" />
+                </View>
+                <Text style={styles.statLabel}>Time In</Text>
+                <Text style={styles.statValue}>--:--</Text>
+              </View>
+              
+              <View style={styles.statBox}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="log-out-outline" size={28} color="#ef4444" />
+                </View>
+                <Text style={styles.statLabel}>Time Out</Text>
+                <Text style={styles.statValue}>--:--</Text>
+              </View>
+            </View>
+
+            <View style={styles.statsGrid}>
+              <View style={styles.statBox}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="hourglass-outline" size={28} color="#94A3B8" />
+                </View>
+                <Text style={styles.statLabel}>Hours Today</Text>
+                <Text style={styles.statValue}>0.0 hrs</Text>
+              </View>
+              
+              <View style={styles.statBox}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="calendar-number-outline" size={28} color="#1a365d" />
+                </View>
+                <Text style={styles.statLabel}>This Month</Text>
+                <Text style={styles.statValue}>0 days</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Actions Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="flash" size={24} color="#1a365d" />
+              <Text style={styles.cardTitle}>Quick Actions</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Attendance')}
+            >
+              <Ionicons name="calendar" size={22} color="#1a365d" />
+              <Text style={styles.actionButtonText}>View Full Attendance</Text>
+              <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Payroll')}
+            >
+              <Ionicons name="cash" size={22} color="#1a365d" />
+              <Text style={styles.actionButtonText}>Check Payroll</Text>
+              <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Sidebar */}
+      <Sidebar
+        visible={showSidebar}
+        onClose={() => setShowSidebar(false)}
+        navigation={navigation}
+        currentRoute="Home"
+      />
 
       {/* QR Code Modal */}
       <QRCodeModal
@@ -206,84 +257,99 @@ export default function HomeScreen() {
         qrData={qrData || ''}
         userName={`${user?.firstName} ${user?.lastName}`}
       />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7fafc',
+    backgroundColor: '#f8fafc',
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     padding: 20,
   },
+  headerButton: {
+    marginLeft: 15,
+  },
   welcomeContainer: {
     marginBottom: 24,
-    backgroundColor: '#48bb78',
-    borderRadius: 12,
-    padding: 20,
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#e6fffa',
-    marginBottom: 12,
-  },
-  userTypeBadge: {
-    backgroundColor: '#2f855a',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-  },
-  userTypeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  qrButtonContainer: {
-    marginTop: 8,
-  },
-  qrButton: {
-    backgroundColor: '#2f855a',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1a365d',
   },
-  qrButtonCreate: {
-    backgroundColor: '#38a169',
+  welcomeHeader: {
+    marginBottom: 20,
   },
-  qrButtonIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  welcomeLeft: {
+    flex: 1,
   },
-  qrButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  welcomeGreeting: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1a365d',
+    marginBottom: 4,
+  },
+  employeeId: {
+    fontSize: 14,
+    color: '#64748b',
     fontWeight: '600',
   },
-  card: {
-    backgroundColor: '#fff',
+  qrButtonContainer: {
+    marginTop: 8,
+  },
+  qrButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrButtonLoading: {
+    backgroundColor: '#F1F5F9',
+  },
+  qrButtonActive: {
+    backgroundColor: '#38aa62ff',
+  },
+  qrButtonCreate: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 2,
+    borderColor: '#94A3B8',
+  },
+  qrButtonText: {
+    color: '#1a365d',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  qrButtonTextActive: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
@@ -292,74 +358,89 @@ const styles = StyleSheet.create({
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1a365d',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#2d3748',
+    fontWeight: '700',
+    color: '#1a365d',
+    marginLeft: 12,
+  },
+  dateText: {
+    fontSize: 14,
+    color: '#64748b',
     marginBottom: 16,
+    fontWeight: '500',
   },
-  cardText: {
-    fontSize: 14,
-    color: '#718096',
-    lineHeight: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
+  scheduleItem: {
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#f1f5f9',
   },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4a5568',
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#718096',
-    flex: 1,
-    textAlign: 'right',
-  },
-  statusActive: {
-    color: '#48bb78',
-    fontWeight: '600',
-  },
-  statusInactive: {
-    color: '#f56565',
-    fontWeight: '600',
-  },
-  statsContainer: {
+  scheduleTime: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
     alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#48bb78',
     marginBottom: 4,
   },
-  statLabel: {
-    fontSize: 14,
-    color: '#718096',
-  },
-  logoutButton: {
-    backgroundColor: '#f56565',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  logoutButtonText: {
-    color: '#fff',
+  scheduleTimeText: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#1a365d',
+    marginLeft: 8,
+  },
+  scheduleLabel: {
+    fontSize: 14,
+    color: '#64748b',
+    marginLeft: 28,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  statIconContainer: {
+    marginBottom: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a365d',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a365d',
+    marginLeft: 12,
   },
 });
