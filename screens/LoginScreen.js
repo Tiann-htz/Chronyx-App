@@ -11,11 +11,11 @@ import {
   Alert,
   ActivityIndicator,
   Image,
-  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
 
@@ -25,25 +25,6 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  
-  // Forgot password states
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
-  const [forgotLoading, setForgotLoading] = useState(false);
-  const [errors, setErrors] = useState({
-    employeeId: false,
-    firstName: false,
-    lastName: false,
-    newPassword: false,
-    confirmNewPassword: false,
-  });
-  
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -91,97 +72,7 @@ export default function LoginScreen({ navigation }) {
       Alert.alert('Error', 'Please enter your email address first');
       return;
     }
-    setForgotEmail(email);
     setShowForgotModal(true);
-  };
-
-  const handleForgotPassword = async () => {
-    // Reset errors
-    setErrors({
-      employeeId: false,
-      firstName: false,
-      lastName: false,
-      newPassword: false,
-      confirmNewPassword: false,
-    });
-
-    // Validate input
-    if (!employeeId || !firstName || !lastName || !newPassword || !confirmNewPassword) {
-      Alert.alert('Error', 'All fields are required');
-      return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      setErrors(prev => ({ ...prev, confirmNewPassword: true }));
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setErrors(prev => ({ ...prev, newPassword: true }));
-      return;
-    }
-
-    setForgotLoading(true);
-
-    try {
-      const response = await axios.post(`${API_URL}?endpoint=forgot-password`, {
-        email: forgotEmail.trim().toLowerCase(),
-        employeeId: employeeId.trim(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        newPassword: newPassword,
-      });
-
-      if (response.data.success) {
-        Alert.alert('Success', 'Password reset successfully! Please login with your new password.');
-        
-        // Close modal and clear form
-        setShowForgotModal(false);
-        setEmployeeId('');
-        setFirstName('');
-        setLastName('');
-        setNewPassword('');
-        setConfirmNewPassword('');
-        setPassword('');
-      }
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      
-      if (error.response) {
-        // Set error borders for incorrect credentials
-        if (error.response.data.message.includes('credentials')) {
-          setErrors({
-            employeeId: true,
-            firstName: true,
-            lastName: true,
-            newPassword: false,
-            confirmNewPassword: false,
-          });
-        }
-      } else if (error.request) {
-        Alert.alert('Error', 'Cannot connect to server. Please check your internet connection.');
-      } else {
-        Alert.alert('Error', 'Something went wrong. Please try again.');
-      }
-    } finally {
-      setForgotLoading(false);
-    }
-  };
-
-  const closeForgotModal = () => {
-    setShowForgotModal(false);
-    setEmployeeId('');
-    setFirstName('');
-    setLastName('');
-    setNewPassword('');
-    setConfirmNewPassword('');
-    setErrors({
-      employeeId: false,
-      firstName: false,
-      lastName: false,
-      newPassword: false,
-      confirmNewPassword: false,
-    });
   };
 
   return (
@@ -255,6 +146,15 @@ export default function LoginScreen({ navigation }) {
               </View>
             </View>
 
+            <View style={styles.forgotPasswordContainer}>
+              <TouchableOpacity 
+                onPress={openForgotPasswordModal}
+                disabled={loading}
+              >
+                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity 
               style={[styles.button, loading && styles.buttonDisabled]} 
               onPress={handleLogin}
@@ -269,14 +169,6 @@ export default function LoginScreen({ navigation }) {
                   <Ionicons name="arrow-forward" size={20} color="#FEFDFD" style={styles.buttonIcon} />
                 </>
               )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={openForgotPasswordModal}
-              disabled={loading}
-              style={styles.forgotPasswordButton}
-            >
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
             </TouchableOpacity>
 
             <View style={styles.dividerContainer}>
@@ -296,166 +188,13 @@ export default function LoginScreen({ navigation }) {
             </View>
           </View>
         </View>
-
-        {/* Forgot Password Modal */}
-        <Modal
-          visible={showForgotModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={closeForgotModal}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalOverlay}
-          >
-            <View style={styles.modalContainer}>
-              <ScrollView 
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.modalScrollContent}
-              >
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Reset Password</Text>
-                  <TouchableOpacity onPress={closeForgotModal} style={styles.closeButton}>
-                    <Ionicons name="close" size={24} color="#2D3748" />
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.modalMessage}>
-                  Forgot your password for{'\n'}
-                  <Text style={styles.emailHighlight}>{forgotEmail}</Text>?
-                </Text>
-                <Text style={styles.modalSubtext}>
-                  Please verify your account details to reset your password
-                </Text>
-
-                <View style={styles.modalInputWrapper}>
-                  <View style={[styles.inputContainer, errors.employeeId && styles.inputError]}>
-                    <Ionicons name="card-outline" size={20} color="#0A7EB1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Employee ID"
-                      placeholderTextColor="#A0AEC0"
-                      value={employeeId}
-                      onChangeText={(text) => {
-                        setEmployeeId(text);
-                        setErrors(prev => ({ ...prev, employeeId: false }));
-                      }}
-                      editable={!forgotLoading}
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  <View style={[styles.inputContainer, errors.firstName && styles.inputError]}>
-                    <Ionicons name="person-outline" size={20} color="#0A7EB1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="First Name"
-                      placeholderTextColor="#A0AEC0"
-                      value={firstName}
-                      onChangeText={(text) => {
-                        setFirstName(text);
-                        setErrors(prev => ({ ...prev, firstName: false }));
-                      }}
-                      editable={!forgotLoading}
-                    />
-                  </View>
-
-                  <View style={[styles.inputContainer, errors.lastName && styles.inputError]}>
-                    <Ionicons name="person-outline" size={20} color="#0A7EB1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Last Name"
-                      placeholderTextColor="#A0AEC0"
-                      value={lastName}
-                      onChangeText={(text) => {
-                        setLastName(text);
-                        setErrors(prev => ({ ...prev, lastName: false }));
-                      }}
-                      editable={!forgotLoading}
-                    />
-                  </View>
-
-                  <View style={[styles.inputContainer, errors.newPassword && styles.inputError]}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#0A7EB1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="New Password (min 6 characters)"
-                      placeholderTextColor="#A0AEC0"
-                      value={newPassword}
-                      onChangeText={(text) => {
-                        setNewPassword(text);
-                        setErrors(prev => ({ ...prev, newPassword: false }));
-                      }}
-                      secureTextEntry={!showNewPassword}
-                      editable={!forgotLoading}
-                    />
-                    <TouchableOpacity 
-                      onPress={() => setShowNewPassword(!showNewPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      <Ionicons 
-                        name={showNewPassword ? "eye-outline" : "eye-off-outline"} 
-                        size={20} 
-                        color="#A0AEC0" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={[styles.inputContainer, errors.confirmNewPassword && styles.inputError]}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#0A7EB1" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Confirm New Password"
-                      placeholderTextColor="#A0AEC0"
-                      value={confirmNewPassword}
-                      onChangeText={(text) => {
-                        setConfirmNewPassword(text);
-                        setErrors(prev => ({ ...prev, confirmNewPassword: false }));
-                      }}
-                      secureTextEntry={!showConfirmNewPassword}
-                      editable={!forgotLoading}
-                    />
-                    <TouchableOpacity 
-                      onPress={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      <Ionicons 
-                        name={showConfirmNewPassword ? "eye-outline" : "eye-off-outline"} 
-                        size={20} 
-                        color="#A0AEC0" 
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={[styles.button, forgotLoading && styles.buttonDisabled]} 
-                  onPress={handleForgotPassword}
-                  disabled={forgotLoading}
-                  activeOpacity={0.8}
-                >
-                  {forgotLoading ? (
-                    <ActivityIndicator color="#FEFDFD" />
-                  ) : (
-                    <>
-                      <Text style={styles.buttonText}>Reset Password</Text>
-                      <Ionicons name="checkmark-circle-outline" size={20} color="#FEFDFD" style={styles.buttonIcon} />
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  onPress={closeForgotModal}
-                  disabled={forgotLoading}
-                  style={styles.cancelButton}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
       </ScrollView>
+
+      <ForgotPasswordModal 
+        visible={showForgotModal}
+        onClose={() => setShowForgotModal(false)}
+        email={email}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -523,7 +262,7 @@ const styles = StyleSheet.create({
     color: '#718096',
   },
   inputWrapper: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -546,6 +285,15 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 4,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotPasswordText: {
+    color: '#0A7EB1',
+    fontSize: 14,
+    fontWeight: '500',
   },
   button: {
     backgroundColor: '#0A7EB1',
