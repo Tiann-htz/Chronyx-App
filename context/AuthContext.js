@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
@@ -7,19 +7,18 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is already logged in when app starts
   useEffect(() => {
-    checkLoginStatus();
+    loadUser();
   }, []);
 
-  const checkLoginStatus = async () => {
+  const loadUser = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
         setUser(JSON.parse(userData));
       }
     } catch (error) {
-      console.error('Error checking login status:', error);
+      console.error('Error loading user:', error);
     } finally {
       setLoading(false);
     }
@@ -30,7 +29,7 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
-      console.error('Error saving login data:', error);
+      console.error('Error saving user:', error);
     }
   };
 
@@ -43,8 +42,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // NEW: Update user function
+  const updateUser = async (updatedData) => {
+    try {
+      const newUserData = { ...user, ...updatedData };
+      await AsyncStorage.setItem('user', JSON.stringify(newUserData));
+      setUser(newUserData);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

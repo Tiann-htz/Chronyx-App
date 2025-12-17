@@ -293,6 +293,136 @@ module.exports = async (req, res) => {
       }
     }
    
+    // UPDATE PROFILE ENDPOINT - Update employee details
+    if (endpoint === 'update-profile' && req.method === 'POST') {
+      const { userId, firstName, lastName, email } = req.body;
+
+      console.log('=== UPDATE PROFILE REQUEST ===');
+      console.log('User ID:', userId);
+
+      if (!userId || !firstName || !lastName || !email) {
+        return res.status(400).json({
+          success: false,
+          message: 'All fields are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Check if email is being changed and if it already exists
+        const [existingEmail] = await connection.execute(
+          'SELECT * FROM employee WHERE email = ? AND employee_id != ?',
+          [email, userId]
+        );
+
+        if (existingEmail.length > 0) {
+          connection.release();
+          return res.status(400).json({
+            success: false,
+            message: 'Email already exists',
+          });
+        }
+
+        // Update employee profile
+        await connection.execute(
+          'UPDATE employee SET first_name = ?, last_name = ?, email = ?, updated_at = NOW() WHERE employee_id = ?',
+          [firstName, lastName, email, userId]
+        );
+
+        // Update employee_qr table if exists
+        await connection.execute(
+          'UPDATE employee_qr SET first_name = ?, last_name = ?, email = ? WHERE employee_id = ?',
+          [firstName, lastName, email, userId]
+        );
+
+        connection.release();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Profile updated successfully',
+          user: {
+            id: userId,
+            firstName,
+            lastName,
+            email,
+          },
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // CHANGE PASSWORD ENDPOINT
+    if (endpoint === 'change-password' && req.method === 'POST') {
+      const { userId, currentPassword, newPassword } = req.body;
+
+      console.log('=== CHANGE PASSWORD REQUEST ===');
+      console.log('User ID:', userId);
+
+      if (!userId || !currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'All fields are required',
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Verify current password
+        const [employees] = await connection.execute(
+          'SELECT * FROM employee WHERE employee_id = ? AND password = ?',
+          [userId, currentPassword]
+        );
+
+        if (employees.length === 0) {
+          connection.release();
+          return res.status(401).json({
+            success: false,
+            message: 'Current password is incorrect',
+          });
+        }
+
+        // Update password
+        await connection.execute(
+          'UPDATE employee SET password = ?, updated_at = NOW() WHERE employee_id = ?',
+          [newPassword, userId]
+        );
+
+        connection.release();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Password changed successfully',
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    
     // If no endpoint matches
     return res.status(404).json({
       success: false,
