@@ -293,6 +293,51 @@ module.exports = async (req, res) => {
       }
     }
    
+    // GET ACCOUNT INFO ENDPOINT - Fetch created_at and updated_at
+    if (endpoint === 'get-account-info' && req.method === 'GET') {
+      const { userId } = req.query;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        const [employees] = await connection.execute(
+          'SELECT created_at, updated_at FROM employee WHERE employee_id = ?',
+          [userId]
+        );
+
+        connection.release();
+
+        if (employees.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Employee not found',
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          createdAt: employees[0].created_at,
+          updatedAt: employees[0].updated_at,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
     // UPDATE PROFILE ENDPOINT - Update employee details
     if (endpoint === 'update-profile' && req.method === 'POST') {
       const { userId, firstName, lastName, email } = req.body;
@@ -422,7 +467,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    
+
     // If no endpoint matches
     return res.status(404).json({
       success: false,
