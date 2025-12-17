@@ -18,7 +18,7 @@ function AppNavigator() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00d4ff" />
+        <ActivityIndicator size="large" color="#0A7EB1" />
       </View>
     );
   }
@@ -33,7 +33,7 @@ function AppNavigator() {
               name="Home"
               component={HomeScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
+                headerStyle: { backgroundColor: '#105891' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'Dashboard',
@@ -44,7 +44,7 @@ function AppNavigator() {
               name="MyAccount"
               component={MyAccountScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
+                headerStyle: { backgroundColor: '#105891' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'My Account',
@@ -72,27 +72,20 @@ function AppNavigator() {
             />
           </>
         ) : (
-          // Auth Screens
+          // Auth Screens - Headers Hidden
           <>
             <Stack.Screen
               name="Login"
               component={LoginScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
-                headerTintColor: '#fff',
-                headerTitleStyle: { fontWeight: 'bold' },
-                title: 'Login',
-                headerLeft: () => null,
+                headerShown: false,
               }}
             />
             <Stack.Screen
               name="Signup"
               component={SignupScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
-                headerTintColor: '#fff',
-                headerTitleStyle: { fontWeight: 'bold' },
-                title: 'Sign Up',
+                headerShown: false,
               }}
             />
           </>
@@ -115,6 +108,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#FEFDFD',
   },
 });

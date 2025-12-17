@@ -467,6 +467,77 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Add this endpoint to your chronyxApi.js file, after the CHANGE PASSWORD ENDPOINT
+
+    // FORGOT PASSWORD ENDPOINT - Reset password with verification
+    if (endpoint === 'forgot-password' && req.method === 'POST') {
+      const { email, employeeId, firstName, lastName, newPassword } = req.body;
+
+      console.log('=== FORGOT PASSWORD REQUEST ===');
+      console.log('Email:', email);
+      console.log('Employee ID:', employeeId);
+
+      if (!email || !employeeId || !firstName || !lastName || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'All fields are required',
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Verify employee credentials (email, employee_id, first_name, last_name)
+        const [employees] = await connection.execute(
+          'SELECT * FROM employee WHERE employee_id = ? AND email = ? AND first_name = ? AND last_name = ?',
+          [employeeId, email, firstName, lastName]
+        );
+
+        if (employees.length === 0) {
+          connection.release();
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid credentials. Please check your Employee ID, First Name, and Last Name.',
+          });
+        }
+
+        // Update password
+        await connection.execute(
+          'UPDATE employee SET password = ?, updated_at = NOW() WHERE employee_id = ?',
+          [newPassword, employeeId]
+        );
+
+        connection.release();
+
+        console.log('✓ Password reset successfully for employee ID:', employeeId);
+        console.log('=== FORGOT PASSWORD REQUEST SUCCESS ===');
+
+        return res.status(200).json({
+          success: true,
+          message: 'Password reset successfully',
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        console.log('=== FORGOT PASSWORD REQUEST FAILED ===');
+        
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    
 
     // If no endpoint matches
     return res.status(404).json({
