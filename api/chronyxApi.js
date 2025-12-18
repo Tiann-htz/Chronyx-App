@@ -338,6 +338,58 @@ module.exports = async (req, res) => {
       }
     }
 
+    // GET USER PROFILE (including avatar)
+    if (endpoint === 'get-profile' && req.method === 'GET') {
+      const { userId } = req.query;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        const [employees] = await connection.execute(
+          'SELECT employee_id, first_name, last_name, email, avatar_url, created_at, updated_at FROM employee WHERE employee_id = ?',
+          [userId]
+        );
+
+        connection.release();
+
+        if (employees.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Employee not found',
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          user: {
+            id: employees[0].employee_id,
+            firstName: employees[0].first_name,
+            lastName: employees[0].last_name,
+            email: employees[0].email,
+            avatarUrl: employees[0].avatar_url,
+            createdAt: employees[0].created_at,
+            updatedAt: employees[0].updated_at,
+          },
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
     // UPDATE PROFILE ENDPOINT - Update employee details
     if (endpoint === 'update-profile' && req.method === 'POST') {
       const { userId, firstName, lastName, email } = req.body;
@@ -397,6 +449,53 @@ module.exports = async (req, res) => {
       } catch (dbError) {
         if (connection) connection.release();
         console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // UPDATE AVATAR ENDPOINT
+    if (endpoint === 'update-avatar' && req.method === 'POST') {
+      const { userId, avatarUrl } = req.body;
+
+      console.log('=== UPDATE AVATAR REQUEST ===');
+      console.log('User ID:', userId);
+
+      if (!userId || !avatarUrl) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID and avatar URL are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Update employee avatar
+        await connection.execute(
+          'UPDATE employee SET avatar_url = ?, updated_at = NOW() WHERE employee_id = ?',
+          [avatarUrl, userId]
+        );
+
+        connection.release();
+
+        console.log('✓ Avatar updated successfully for user ID:', userId);
+        console.log('=== UPDATE AVATAR REQUEST SUCCESS ===');
+
+        return res.status(200).json({
+          success: true,
+          message: 'Avatar updated successfully',
+          avatarUrl: avatarUrl,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        console.log('=== UPDATE AVATAR REQUEST FAILED ===');
+        
         return res.status(500).json({
           success: false,
           message: 'Database error',
@@ -467,8 +566,6 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Add this endpoint to your chronyxApi.js file, after the CHANGE PASSWORD ENDPOINT
-
     // FORGOT PASSWORD ENDPOINT - Reset password with verification
     if (endpoint === 'forgot-password' && req.method === 'POST') {
       const { email, employeeId, firstName, lastName, newPassword } = req.body;
@@ -536,8 +633,6 @@ module.exports = async (req, res) => {
         });
       }
     }
-
-    
 
     // If no endpoint matches
     return res.status(404).json({

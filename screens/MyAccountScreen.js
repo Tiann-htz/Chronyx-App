@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
+import { pickImageFromGallery, takePhotoWithCamera, uploadImageToImgBB } from '../utils/imageUpload';
 import axios from 'axios';
 
 const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
@@ -24,6 +25,7 @@ export default function MyAccountScreen({ navigation }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || null);
   const [accountInfo, setAccountInfo] = useState({
     createdAt: null,
     updatedAt: null,
@@ -61,6 +63,7 @@ export default function MyAccountScreen({ navigation }) {
       ),
     });
     fetchAccountInfo();
+    fetchUserProfile();
   }, [navigation]);
 
   const fetchAccountInfo = async () => {
@@ -76,6 +79,19 @@ export default function MyAccountScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Error fetching account info:', error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}?endpoint=get-profile&userId=${user.id}`
+      );
+      if (response.data.success && response.data.user.avatarUrl) {
+        setAvatarUrl(response.data.user.avatarUrl);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
     }
   };
 
@@ -195,10 +211,81 @@ export default function MyAccountScreen({ navigation }) {
 
   const handleChangeAvatar = () => {
     Alert.alert(
-      'Coming Soon',
-      'Profile picture upload feature will be available in the next update!',
-      [{ text: 'OK' }]
+      'Change Profile Picture',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: handleTakePhoto,
+        },
+        {
+          text: 'Choose from Gallery',
+          onPress: handlePickImage,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
     );
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const imageUri = await pickImageFromGallery();
+      if (imageUri) {
+        await uploadAvatar(imageUri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const imageUri = await takePhotoWithCamera();
+      if (imageUri) {
+        await uploadAvatar(imageUri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo');
+    }
+  };
+
+  const uploadAvatar = async (imageUri) => {
+    setLoading(true);
+    try {
+      // Show uploading message
+      Alert.alert('Uploading', 'Please wait while we upload your photo...');
+
+      // Upload to ImgBB and get URL
+      const uploadedUrl = await uploadImageToImgBB(imageUri);
+
+      // Save URL to database
+      const response = await axios.post(`${API_URL}?endpoint=update-avatar`, {
+        userId: user.id,
+        avatarUrl: uploadedUrl,
+      });
+
+      if (response.data.success) {
+        // Update local state
+        setAvatarUrl(uploadedUrl);
+
+        // Update user context
+        await updateUser({
+          avatarUrl: uploadedUrl,
+        });
+
+        Alert.alert('Success', 'Profile picture updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      Alert.alert('Error', 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getInitials = () => {
@@ -215,14 +302,27 @@ export default function MyAccountScreen({ navigation }) {
           <View style={styles.profileHeaderCard}>
             <View style={styles.avatarSection}>
               <View style={styles.avatarContainer}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{getInitials()}</Text>
-                </View>
+                {avatarUrl ? (
+                  <Image
+                    source={{ uri: avatarUrl }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{getInitials()}</Text>
+                  </View>
+                )}
                 <TouchableOpacity
                   style={styles.avatarEditButton}
                   onPress={handleChangeAvatar}
+                  disabled={loading}
                 >
-                  <Ionicons name="camera" size={16} color="#ffffff" />
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Ionicons name="camera" size={16} color="#ffffff" />
+                  )}
                 </TouchableOpacity>
               </View>
               <View style={styles.profileHeaderInfo}>
@@ -619,6 +719,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#38aa62ff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 4,
     borderColor: '#ffffff',
     shadowColor: '#000',

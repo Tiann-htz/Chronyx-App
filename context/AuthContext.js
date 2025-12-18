@@ -25,13 +25,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (userData) => {
-    try {
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-    } catch (error) {
-      console.error('Error saving user:', error);
-    }
-  };
+  try {
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  } catch (error) {
+    console.error('Error saving login data:', error);
+  }
+};
 
   const logout = async () => {
     try {
