@@ -9,6 +9,7 @@ import {
   Dimensions,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -25,11 +26,9 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
   useEffect(() => {
     if (visible) {
       setIsVisible(true);
-      // Reset animations to initial state
       slideAnim.setValue(-SIDEBAR_WIDTH);
       fadeAnim.setValue(0);
       
-      // Start opening animation
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: 0,
@@ -43,7 +42,6 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
         }),
       ]).start();
     } else if (isVisible) {
-      // Start closing animation
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: -SIDEBAR_WIDTH,
@@ -56,7 +54,6 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
           useNativeDriver: true,
         }),
       ]).start(() => {
-        // Only set invisible after animation completes
         setIsVisible(false);
       });
     }
@@ -84,6 +81,12 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
     setTimeout(() => {
       navigation.navigate(screenName);
     }, 100);
+  };
+
+  const getInitials = () => {
+    const first = user?.firstName?.charAt(0) || '';
+    const last = user?.lastName?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase();
   };
 
   const menuItems = [
@@ -115,8 +118,18 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.userContainer}>
-              <View style={styles.avatarContainer}>
-                <Ionicons name="person-circle" size={60} color="#94A3B8" />
+              <View style={styles.avatarWrapper}>
+                {user?.avatarUrl ? (
+                  <Image
+                    source={{ uri: user.avatarUrl }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarInitials}>{getInitials()}</Text>
+                  </View>
+                )}
               </View>
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>
@@ -205,8 +218,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarContainer: {
+  avatarWrapper: {
     marginRight: 12,
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#38aa62ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  avatarInitials: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   userInfo: {
     flex: 1,
@@ -219,7 +254,7 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#cbd5e1',
   },
   menuContainer: {
     flex: 1,

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -89,6 +90,12 @@ export default function HomeScreen({ navigation }) {
     setShowQRModal(true);
   };
 
+  const getInitials = () => {
+    const first = user?.firstName?.charAt(0) || '';
+    const last = user?.lastName?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase();
+  };
+
   // Get current date info
   const getCurrentDate = () => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -104,6 +111,22 @@ export default function HomeScreen({ navigation }) {
           {/* Welcome Container */}
           <View style={styles.welcomeContainer}>
             <View style={styles.welcomeHeader}>
+              {/* Avatar Section */}
+              <View style={styles.avatarSection}>
+                {user?.avatarUrl ? (
+                  <Image
+                    source={{ uri: user.avatarUrl }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarInitials}>{getInitials()}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* User Info Section */}
               <View style={styles.welcomeLeft}>
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
                 <Text style={styles.welcomeTitle}>
@@ -292,7 +315,34 @@ const styles = StyleSheet.create({
     borderLeftColor: '#1a365d',
   },
   welcomeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  avatarSection: {
+    marginRight: 16,
+  },
+  avatarImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    borderColor: '#38aa62ff',
+  },
+  avatarPlaceholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#38aa62ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#38aa62ff',
+  },
+  avatarInitials: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   welcomeLeft: {
     flex: 1,

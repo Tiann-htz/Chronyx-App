@@ -138,54 +138,56 @@ module.exports = async (req, res) => {
     }
 
     // LOGIN ENDPOINT - Authenticate employee
-    if (endpoint === 'login' && req.method === 'POST') {
-      const { email, password } = req.body;
+if (endpoint === 'login' && req.method === 'POST') {
+  const { email, password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email and password are required',
-        });
-      }
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required',
+    });
+  }
 
-      let connection;
-      try {
-        connection = await pool.getConnection();
+  let connection;
+  try {
+    connection = await pool.getConnection();
 
-        const [employees] = await connection.execute(
-          'SELECT * FROM employee WHERE email = ? AND password = ?',
-          [email, password]
-        );
+    // Select all necessary fields including avatar_url
+    const [employees] = await connection.execute(
+      'SELECT employee_id, first_name, last_name, email, avatar_url FROM employee WHERE email = ? AND password = ?',
+      [email, password]
+    );
 
-        connection.release();
+    connection.release();
 
-        if (employees.length === 0) {
-          return res.status(401).json({
-            success: false,
-            message: 'Invalid email or password',
-          });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: 'Login successful',
-          user: {
-            id: employees[0].employee_id,
-            firstName: employees[0].first_name,
-            lastName: employees[0].last_name,
-            email: employees[0].email,
-          },
-        });
-      } catch (dbError) {
-        if (connection) connection.release();
-        console.error('Database error:', dbError);
-        return res.status(500).json({
-          success: false,
-          message: 'Database error',
-          error: dbError.message,
-        });
-      }
+    if (employees.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+      });
     }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: employees[0].employee_id,
+        firstName: employees[0].first_name,
+        lastName: employees[0].last_name,
+        email: employees[0].email,
+        avatarUrl: employees[0].avatar_url, // Include avatar URL
+      },
+    });
+  } catch (dbError) {
+    if (connection) connection.release();
+    console.error('Database error:', dbError);
+    return res.status(500).json({
+      success: false,
+      message: 'Database error',
+      error: dbError.message,
+    });
+  }
+}
 
     // CREATE QR CODE ENDPOINT
     if (endpoint === 'create-qr' && req.method === 'POST') {
