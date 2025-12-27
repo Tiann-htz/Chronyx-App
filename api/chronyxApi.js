@@ -636,6 +636,156 @@ if (endpoint === 'login' && req.method === 'POST') {
       }
     }
 
+
+    // GET TODAY'S ATTENDANCE ENDPOINT
+    if (endpoint === 'get-today-attendance' && req.method === 'GET') {
+      const { employeeId } = req.query;
+
+      if (!employeeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+
+        // Get time-in record for today
+        const [timeInRecords] = await connection.execute(
+          `SELECT * FROM attendance 
+           WHERE employee_id = ? AND date = ? AND action_type = 'time-in' 
+           ORDER BY timestamp DESC LIMIT 1`,
+          [employeeId, today]
+        );
+
+        // Get time-out record for today
+        const [timeOutRecords] = await connection.execute(
+          `SELECT * FROM attendance 
+           WHERE employee_id = ? AND date = ? AND action_type = 'time-out' 
+           ORDER BY timestamp DESC LIMIT 1`,
+          [employeeId, today]
+        );
+
+        connection.release();
+
+        if (timeInRecords.length === 0) {
+          return res.status(200).json({
+            success: true,
+            data: null,
+            message: 'No attendance record for today',
+          });
+        }
+
+        const timeIn = timeInRecords[0];
+        const timeOut = timeOutRecords.length > 0 ? timeOutRecords[0] : null;
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            timeIn: timeIn.time,
+            timeOut: timeOut ? timeOut.time : null,
+            status: timeOut ? timeOut.status : timeIn.status,
+            late_minutes: timeOut ? timeOut.late_minutes : timeIn.late_minutes,
+            overtime_minutes: timeOut ? timeOut.overtime_minutes : 0,
+            undertime_minutes: timeOut ? timeOut.undertime_minutes : 0,
+          },
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // GET TIME POLICY ENDPOINT
+    if (endpoint === 'get-time-policy' && req.method === 'GET') {
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        const [policies] = await connection.execute(
+          'SELECT * FROM time_policy ORDER BY policy_id DESC LIMIT 1'
+        );
+
+        connection.release();
+
+        if (policies.length === 0) {
+          return res.status(200).json({
+            success: true,
+            data: null,
+            message: 'No time policy set',
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          data: policies[0],
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // GET MONTHLY STATS ENDPOINT
+    if (endpoint === 'get-monthly-stats' && req.method === 'GET') {
+      const { employeeId, month, year } = req.query;
+
+      if (!employeeId || !month || !year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID, month, and year are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Count distinct days with time-in records for the month
+        const [stats] = await connection.execute(
+          `SELECT COUNT(DISTINCT date) as totalDays
+           FROM attendance 
+           WHERE employee_id = ? 
+           AND MONTH(date) = ? 
+           AND YEAR(date) = ?
+           AND action_type = 'time-in'`,
+          [employeeId, month, year]
+        );
+
+        connection.release();
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            totalDays: stats[0]?.totalDays || 0,
+          },
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
     // If no endpoint matches
     return res.status(404).json({
       success: false,

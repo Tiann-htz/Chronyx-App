@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -24,9 +25,17 @@ export default function HomeScreen({ navigation }) {
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [checkingQR, setCheckingQR] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // New state for real data
+  const [todayAttendance, setTodayAttendance] = useState(null);
+  const [timePolicy, setTimePolicy] = useState(null);
+  const [monthlyStats, setMonthlyStats] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     checkUserQR();
+    fetchAllData();
   }, []);
 
   // Add menu button to header
@@ -42,6 +51,71 @@ export default function HomeScreen({ navigation }) {
       ),
     });
   }, [navigation]);
+
+  const fetchAllData = async () => {
+    setLoadingData(true);
+    try {
+      await Promise.all([
+        fetchTodayAttendance(),
+        fetchTimePolicy(),
+        fetchMonthlyStats(),
+      ]);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchAllData();
+    setRefreshing(false);
+  };
+
+  const fetchTodayAttendance = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}?endpoint=get-today-attendance&employeeId=${user.id}`
+      );
+      if (response.data.success) {
+        setTodayAttendance(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching today attendance:', error);
+      setTodayAttendance(null);
+    }
+  };
+
+  const fetchTimePolicy = async () => {
+    try {
+      const response = await axios.get(`${API_URL}?endpoint=get-time-policy`);
+      if (response.data.success) {
+        setTimePolicy(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching time policy:', error);
+      setTimePolicy(null);
+    }
+  };
+
+  const fetchMonthlyStats = async () => {
+    try {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      
+      const response = await axios.get(
+        `${API_URL}?endpoint=get-monthly-stats&employeeId=${user.id}&month=${month}&year=${year}`
+      );
+      if (response.data.success) {
+        setMonthlyStats(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching monthly stats:', error);
+      setMonthlyStats(null);
+    }
+  };
 
   const checkUserQR = async () => {
     try {
@@ -104,9 +178,62 @@ export default function HomeScreen({ navigation }) {
     return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
   };
 
+  // Format time from 24hr to 12hr
+  const formatTime = (timeString) => {
+    if (!timeString) return '--:--';
+    
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format time range
+  const formatTimeRange = (startTime, endTime) => {
+    if (!startTime || !endTime) return 'Not set';
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  // Get status badge
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'on-time': { icon: 'checkmark-circle', color: '#10b981', label: 'On Time' },
+      'late': { icon: 'alert-circle', color: '#ef4444', label: 'Late' },
+      'overtime': { icon: 'time', color: '#3b82f6', label: 'Overtime' },
+      'undertime': { icon: 'time-outline', color: '#f59e0b', label: 'Undertime' },
+      'completed': { icon: 'checkmark-done-circle', color: '#10b981', label: 'Completed' },
+    };
+
+    const config = statusConfig[status] || { icon: 'help-circle', color: '#94A3B8', label: 'Unknown' };
+    
+    return (
+      <View style={[styles.statusBadge, { backgroundColor: config.color + '20' }]}>
+        <Ionicons name={config.icon} size={16} color={config.color} />
+        <Text style={[styles.statusText, { color: config.color }]}>{config.label}</Text>
+      </View>
+    );
+  };
+
+  // Calculate hours worked
+  const calculateHoursWorked = () => {
+    if (!todayAttendance?.timeIn || !todayAttendance?.timeOut) return '0.0';
+    
+    const timeIn = new Date(`2000-01-01 ${todayAttendance.timeIn}`);
+    const timeOut = new Date(`2000-01-01 ${todayAttendance.timeOut}`);
+    const diff = (timeOut - timeIn) / (1000 * 60 * 60); // Convert to hours
+    
+    return diff.toFixed(1);
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.content}>
           {/* Welcome Container */}
           <View style={styles.welcomeContainer}>
@@ -177,20 +304,37 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.cardTitle}>Today's Schedule</Text>
             </View>
             <Text style={styles.dateText}>{getCurrentDate()}</Text>
-            <View style={styles.scheduleItem}>
-              <View style={styles.scheduleTime}>
-                <Ionicons name="time-outline" size={20} color="#64748b" />
-                <Text style={styles.scheduleTimeText}>8:00 AM - 5:00 PM</Text>
+            
+            {loadingData ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#1a365d" />
               </View>
-              <Text style={styles.scheduleLabel}>Regular Working Hours</Text>
-            </View>
-            <View style={styles.scheduleItem}>
-              <View style={styles.scheduleTime}>
-                <Ionicons name="location-outline" size={20} color="#64748b" />
-                <Text style={styles.scheduleTimeText}>Main Office</Text>
-              </View>
-              <Text style={styles.scheduleLabel}>Work Location</Text>
-            </View>
+            ) : (
+              <>
+                <View style={styles.scheduleItem}>
+                  <View style={styles.scheduleTime}>
+                    <Ionicons name="time-outline" size={20} color="#64748b" />
+                    <Text style={styles.scheduleTimeText}>
+                      {timePolicy 
+                        ? formatTimeRange(timePolicy.time_in_start, timePolicy.official_time_out)
+                        : 'Not set'}
+                    </Text>
+                  </View>
+                  <Text style={styles.scheduleLabel}>
+                    {timePolicy 
+                      ? `${timePolicy.required_hours} hours required • ${timePolicy.grace_period} min grace period`
+                      : 'No schedule set'}
+                  </Text>
+                </View>
+
+                {todayAttendance?.status && (
+                  <View style={styles.todayStatusContainer}>
+                    <Text style={styles.todayStatusLabel}>Today's Status:</Text>
+                    {getStatusBadge(todayAttendance.status)}
+                  </View>
+                )}
+              </>
+            )}
           </View>
 
           {/* Attendance & Stats Card */}
@@ -200,41 +344,93 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.cardTitle}>Today's Attendance</Text>
             </View>
             
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <View style={styles.statIconContainer}>
-                  <Ionicons name="log-in-outline" size={28} color="#10b981" />
-                </View>
-                <Text style={styles.statLabel}>Time In</Text>
-                <Text style={styles.statValue}>--:--</Text>
+            {loadingData ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color="#1a365d" />
               </View>
-              
-              <View style={styles.statBox}>
-                <View style={styles.statIconContainer}>
-                  <Ionicons name="log-out-outline" size={28} color="#ef4444" />
+            ) : todayAttendance ? (
+              <>
+                <View style={styles.statsGrid}>
+                  <View style={styles.statBox}>
+                    <View style={styles.statIconContainer}>
+                      <Ionicons name="log-in-outline" size={28} color="#10b981" />
+                    </View>
+                    <Text style={styles.statLabel}>Time In</Text>
+                    <Text style={styles.statValue}>
+                      {todayAttendance.timeIn ? formatTime(todayAttendance.timeIn) : '--:--'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.statBox}>
+                    <View style={styles.statIconContainer}>
+                      <Ionicons name="log-out-outline" size={28} color="#ef4444" />
+                    </View>
+                    <Text style={styles.statLabel}>Time Out</Text>
+                    <Text style={styles.statValue}>
+                      {todayAttendance.timeOut ? formatTime(todayAttendance.timeOut) : '--:--'}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.statLabel}>Time Out</Text>
-                <Text style={styles.statValue}>--:--</Text>
-              </View>
-            </View>
 
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <View style={styles.statIconContainer}>
-                  <Ionicons name="hourglass-outline" size={28} color="#94A3B8" />
+                <View style={styles.statsGrid}>
+                  <View style={styles.statBox}>
+                    <View style={styles.statIconContainer}>
+                      <Ionicons name="hourglass-outline" size={28} color="#94A3B8" />
+                    </View>
+                    <Text style={styles.statLabel}>Hours Today</Text>
+                    <Text style={styles.statValue}>{calculateHoursWorked()} hrs</Text>
+                  </View>
+                  
+                  <View style={styles.statBox}>
+                    <View style={styles.statIconContainer}>
+                      <Ionicons name="calendar-number-outline" size={28} color="#1a365d" />
+                    </View>
+                    <Text style={styles.statLabel}>This Month</Text>
+                    <Text style={styles.statValue}>
+                      {monthlyStats?.totalDays || 0} days
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.statLabel}>Hours Today</Text>
-                <Text style={styles.statValue}>0.0 hrs</Text>
+
+                {/* Additional Stats if there's late/overtime/undertime */}
+                {(todayAttendance.late_minutes > 0 || 
+                  todayAttendance.overtime_minutes > 0 || 
+                  todayAttendance.undertime_minutes > 0) && (
+                  <View style={styles.additionalStats}>
+                    {todayAttendance.late_minutes > 0 && (
+                      <View style={styles.additionalStatItem}>
+                        <Ionicons name="alert-circle" size={16} color="#ef4444" />
+                        <Text style={styles.additionalStatText}>
+                          Late: {todayAttendance.late_minutes} min
+                        </Text>
+                      </View>
+                    )}
+                    {todayAttendance.overtime_minutes > 0 && (
+                      <View style={styles.additionalStatItem}>
+                        <Ionicons name="time" size={16} color="#3b82f6" />
+                        <Text style={styles.additionalStatText}>
+                          Overtime: {todayAttendance.overtime_minutes} min
+                        </Text>
+                      </View>
+                    )}
+                    {todayAttendance.undertime_minutes > 0 && (
+                      <View style={styles.additionalStatItem}>
+                        <Ionicons name="time-outline" size={16} color="#f59e0b" />
+                        <Text style={styles.additionalStatText}>
+                          Undertime: {todayAttendance.undertime_minutes} min
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Ionicons name="calendar-outline" size={48} color="#cbd5e1" />
+                <Text style={styles.noDataText}>No attendance record yet today</Text>
+                <Text style={styles.noDataSubtext}>Scan your QR code to clock in</Text>
               </View>
-              
-              <View style={styles.statBox}>
-                <View style={styles.statIconContainer}>
-                  <Ionicons name="calendar-number-outline" size={28} color="#1a365d" />
-                </View>
-                <Text style={styles.statLabel}>This Month</Text>
-                <Text style={styles.statValue}>0 days</Text>
-              </View>
-            </View>
+            )}
           </View>
 
           {/* Quick Actions Card */}
@@ -451,6 +647,32 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginLeft: 28,
   },
+  todayStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  todayStatusLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    marginRight: 8,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
   statsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -477,6 +699,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1a365d',
+  },
+  additionalStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  additionalStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+    marginBottom: 4,
+  },
+  additionalStatText: {
+    fontSize: 13,
+    color: '#64748b',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  noDataText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 12,
+  },
+  noDataSubtext: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginTop: 4,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
   actionButton: {
     flexDirection: 'row',
