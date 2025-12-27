@@ -786,6 +786,153 @@ if (endpoint === 'login' && req.method === 'POST') {
       }
     }
 
+     // GET ATTENDANCE HISTORY ENDPOINT
+    if (endpoint === 'get-attendance-history' && req.method === 'GET') {
+      const { employeeId, month, year } = req.query;
+
+      if (!employeeId || !month || !year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID, month, and year are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Get all attendance records for the specified month
+        const [records] = await connection.execute(
+          `SELECT * FROM attendance 
+           WHERE employee_id = ? 
+           AND MONTH(date) = ? 
+           AND YEAR(date) = ?
+           ORDER BY date DESC, timestamp DESC`,
+          [employeeId, month, year]
+        );
+
+        connection.release();
+
+        return res.status(200).json({
+          success: true,
+          data: records,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // GET MONTHLY SUMMARY ENDPOINT
+    if (endpoint === 'get-monthly-summary' && req.method === 'GET') {
+      const { employeeId, month, year } = req.query;
+
+      if (!employeeId || !month || !year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID, month, and year are required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Count distinct days with time-in records
+        const [daysPresent] = await connection.execute(
+          `SELECT COUNT(DISTINCT date) as totalDaysPresent
+           FROM attendance 
+           WHERE employee_id = ? 
+           AND MONTH(date) = ? 
+           AND YEAR(date) = ?
+           AND action_type = 'time-in'`,
+          [employeeId, month, year]
+        );
+
+        // Calculate total hours (sum of completed days only)
+        const [hoursData] = await connection.execute(
+          `SELECT 
+             SUM(
+               CASE 
+                 WHEN tout.time IS NOT NULL 
+                 THEN TIMESTAMPDIFF(MINUTE, 
+                   CONCAT(tin.date, ' ', tin.time), 
+                   CONCAT(tout.date, ' ', tout.time)
+                 ) / 60.0
+                 ELSE 0
+               END
+             ) as totalMinutes
+           FROM attendance tin
+           LEFT JOIN (
+             SELECT employee_id, date, time, action_type
+             FROM attendance
+             WHERE action_type = 'time-out'
+           ) tout ON tin.employee_id = tout.employee_id 
+             AND tin.date = tout.date
+           WHERE tin.employee_id = ?
+           AND MONTH(tin.date) = ?
+           AND YEAR(tin.date) = ?
+           AND tin.action_type = 'time-in'`,
+          [employeeId, month, year]
+        );
+
+        // Count late instances
+        const [lateCount] = await connection.execute(
+          `SELECT COUNT(*) as totalLate
+           FROM attendance 
+           WHERE employee_id = ? 
+           AND MONTH(date) = ? 
+           AND YEAR(date) = ?
+           AND action_type = 'time-in'
+           AND late_minutes > 0`,
+          [employeeId, month, year]
+        );
+
+        // Sum overtime minutes
+        const [overtimeData] = await connection.execute(
+          `SELECT SUM(overtime_minutes) as totalOvertimeMinutes
+           FROM attendance 
+           WHERE employee_id = ? 
+           AND MONTH(date) = ? 
+           AND YEAR(date) = ?
+           AND action_type = 'time-out'
+           AND overtime_minutes > 0`,
+          [employeeId, month, year]
+        );
+
+        connection.release();
+
+        const totalHours = hoursData[0]?.totalMinutes 
+          ? parseFloat(hoursData[0].totalMinutes).toFixed(2)
+          : '0.00';
+
+        const totalOvertimeMinutes = overtimeData[0]?.totalOvertimeMinutes || 0;
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            totalDaysPresent: daysPresent[0]?.totalDaysPresent || 0,
+            totalHours: totalHours,
+            totalLate: lateCount[0]?.totalLate || 0,
+            totalOvertime: totalOvertimeMinutes,
+          },
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
     // If no endpoint matches
     return res.status(404).json({
       success: false,

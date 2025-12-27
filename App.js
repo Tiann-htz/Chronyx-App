@@ -18,7 +18,7 @@ function AppNavigator() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0A7EB1" />
+        <ActivityIndicator size="large" color="#0A6BA3" />
       </View>
     );
   }
@@ -33,7 +33,7 @@ function AppNavigator() {
               name="Home"
               component={HomeScreen}
               options={{
-                headerStyle: { backgroundColor: '#105891' },
+                headerStyle: { backgroundColor: '#0A6BA3' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'Dashboard',
@@ -44,7 +44,7 @@ function AppNavigator() {
               name="MyAccount"
               component={MyAccountScreen}
               options={{
-                headerStyle: { backgroundColor: '#105891' },
+                headerStyle: { backgroundColor: '#0A6BA3' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'My Account',
@@ -54,7 +54,7 @@ function AppNavigator() {
               name="Payroll"
               component={PayrollScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
+                headerStyle: { backgroundColor: '#0A6BA3' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'My Payroll',
@@ -64,7 +64,7 @@ function AppNavigator() {
               name="Attendance"
               component={AttendanceScreen}
               options={{
-                headerStyle: { backgroundColor: '#1a365d' },
+                headerStyle: { backgroundColor: '#0A6BA3' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
                 title: 'My Attendance',
