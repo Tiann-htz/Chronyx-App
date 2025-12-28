@@ -942,6 +942,100 @@ if (endpoint === 'login' && req.method === 'POST') {
       }
     }
 
+
+    // GET CURRENT SALARY PERIOD ENDPOINT
+    if (endpoint === 'get-current-salary' && req.method === 'GET') {
+      const { employeeId } = req.query;
+
+      if (!employeeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Get the most recent payroll record
+        const [records] = await connection.execute(
+          `SELECT * FROM payroll 
+           WHERE employee_id = ? 
+           ORDER BY created_at DESC 
+           LIMIT 1`,
+          [employeeId]
+        );
+
+        connection.release();
+
+        if (records.length === 0) {
+          return res.status(200).json({
+            success: true,
+            data: null,
+            message: 'No current salary period found',
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          data: records[0],
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // GET SALARY HISTORY ENDPOINT
+    if (endpoint === 'get-salary-history' && req.method === 'GET') {
+      const { employeeId } = req.query;
+
+      if (!employeeId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Employee ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Get all payroll records, excluding the most recent one (shown as current)
+        const [records] = await connection.execute(
+          `SELECT * FROM payroll 
+           WHERE employee_id = ? 
+           ORDER BY period_end DESC, created_at DESC
+           LIMIT 50`,
+          [employeeId]
+        );
+
+        connection.release();
+
+        // Remove the first record if it exists (it's the current period)
+        const historyRecords = records.length > 1 ? records.slice(1) : [];
+
+        return res.status(200).json({
+          success: true,
+          data: historyRecords,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
     // If no endpoint matches
     return res.status(404).json({
       success: false,

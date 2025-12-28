@@ -7,6 +7,7 @@ import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
 import MyAccountScreen from './screens/MyAccountScreen';
 import PayrollScreen from './screens/PayrollScreen';
+import SalaryScreen from './screens/SalaryScreen';
 import AttendanceScreen from './screens/AttendanceScreen';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
@@ -51,13 +52,13 @@ function AppNavigator() {
               }}
             />
             <Stack.Screen
-              name="Payroll"
-              component={PayrollScreen}
+              name="Salary"
+              component={SalaryScreen}
               options={{
                 headerStyle: { backgroundColor: '#0A6BA3' },
                 headerTintColor: '#ffffff',
                 headerTitleStyle: { fontWeight: 'bold' },
-                title: 'My Payroll',
+                title: 'My Salary',
               }}
             />
             <Stack.Screen

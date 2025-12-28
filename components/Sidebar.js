@@ -92,7 +92,7 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
   const menuItems = [
     { name: 'Home', icon: 'home', screen: 'Home' },
     { name: 'My Account', icon: 'person', screen: 'MyAccount' },
-    { name: 'My Payroll', icon: 'cash', screen: 'Payroll' },
+{ name: 'My Salary', icon: 'cash', screen: 'Salary' },
     { name: 'My Attendance', icon: 'calendar', screen: 'Attendance' },
   ];
 

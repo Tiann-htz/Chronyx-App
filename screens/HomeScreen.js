@@ -451,10 +451,10 @@ export default function HomeScreen({ navigation }) {
 
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => navigation.navigate('Payroll')}
+              onPress={() => navigation.navigate('Salary')}
             >
               <Ionicons name="cash" size={22} color="#1a365d" />
-              <Text style={styles.actionButtonText}>Check Payroll</Text>
+              <Text style={styles.actionButtonText}>Check My Salary</Text>
               <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
