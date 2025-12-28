@@ -14,14 +14,37 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
+
 const { width } = Dimensions.get('window');
 const SIDEBAR_WIDTH = 280;
 
 export default function Sidebar({ visible, onClose, navigation, currentRoute }) {
   const { user, logout } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const slideAnim = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Fetch unread notification count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}?endpoint=get-notifications&employeeId=${user.id}`
+        );
+        if (response.data.success) {
+          setUnreadNotifications(response.data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    if (user?.id && visible) {
+      fetchUnreadCount();
+    }
+  }, [visible, user]);
 
   useEffect(() => {
     if (visible) {
@@ -145,18 +168,26 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
           <ScrollView style={styles.menuContainer}>
             {menuItems.map((item) => {
               const isActive = currentRoute === item.screen;
+              const showBadge = item.screen === 'Notifications' && unreadNotifications > 0;
+              
               return (
                 <TouchableOpacity
                   key={item.screen}
                   style={[styles.menuItem, isActive && styles.menuItemActive]}
                   onPress={() => handleNavigate(item.screen)}
                 >
-                  <Ionicons
-                    name={item.icon}
-                    size={22}
-                    color={isActive ? '#1a365d' : '#64748b'}
-                    style={styles.menuIcon}
-                  />
+                  <View style={styles.menuIconContainer}>
+                    <Ionicons
+                      name={item.icon}
+                      size={22}
+                      color={isActive ? '#1a365d' : '#64748b'}
+                    />
+                    {showBadge && (
+                      <View style={styles.menuBadge}>
+                        <Text style={styles.menuBadgeText}>{unreadNotifications}</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={[styles.menuText, isActive && styles.menuTextActive]}>
                     {item.name}
                   </Text>
@@ -313,4 +344,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
   },
+
+  menuIconContainer: {
+    position: 'relative',
+    marginRight: 16,
+  },
+  menuBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#ef4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  menuBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  
 });

@@ -24,6 +24,7 @@ export default function NotificationScreen({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     // Set header with menu button
@@ -50,6 +51,7 @@ export default function NotificationScreen({ navigation }) {
 
       if (response.data.success) {
         setNotifications(response.data.data || []);
+        setUnreadCount(response.data.unreadCount || 0);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -65,9 +67,23 @@ export default function NotificationScreen({ navigation }) {
     setRefreshing(false);
   };
 
-  const handleNotificationPress = (notification) => {
+  const handleNotificationPress = async (notification) => {
     setSelectedNotification(notification);
     setShowDetailModal(true);
+
+    // Mark as read if it's unread
+    if (notification.is_read === 0) {
+      try {
+        await axios.post(`${API_URL}?endpoint=mark-notification-read`, {
+          qrId: notification.qr_id,
+        });
+        
+        // Refresh notifications to update count
+        await fetchNotifications();
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
   };
 
   const formatDate = (dateString) => {
@@ -98,20 +114,7 @@ export default function NotificationScreen({ navigation }) {
         }
       >
         <View style={styles.content}>
-          {/* Header Section */}
-          <View style={styles.headerSection}>
-            <View style={styles.headerTitleContainer}>
-              <Ionicons name="notifications" size={28} color="#1a365d" />
-              <Text style={styles.headerTitle}>Your Notifications</Text>
-            </View>
-            {notifications.length > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {notifications.length}
-                </Text>
-              </View>
-            )}
-          </View>
+          
 
           {/* Notifications List */}
           {loading ? (
@@ -127,7 +130,10 @@ export default function NotificationScreen({ navigation }) {
                 return (
                   <TouchableOpacity
                     key={index}
-                    style={styles.notificationCard}
+                    style={[
+                      styles.notificationCard,
+                      notification.is_read === 0 && styles.notificationCardUnread
+                    ]}
                     onPress={() => handleNotificationPress(notification)}
                     activeOpacity={0.7}
                   >
@@ -143,6 +149,9 @@ export default function NotificationScreen({ navigation }) {
                     {/* Content */}
                     <View style={styles.notificationContent}>
                       <View style={styles.notificationHeader}>
+                        {notification.is_read === 0 && (
+                          <View style={styles.unreadDot} />
+                        )}
                         <Text style={styles.notificationTitle}>
                           QR Code Deactivated
                         </Text>
@@ -272,6 +281,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+
+  notificationCardUnread: {
+    borderLeftColor: '#ef4444',
+    borderLeftWidth: 6,
+    backgroundColor: '#fef2f2',
+  },
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ef4444',
+    marginRight: 8,
+  },
+  
   notificationsList: {
     gap: 12,
   },

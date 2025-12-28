@@ -1060,11 +1060,59 @@ if (endpoint === 'login' && req.method === 'POST') {
           [employeeId]
         );
 
+        // Count unread notifications
+        const [unreadCount] = await connection.execute(
+          `SELECT COUNT(*) as unread_count FROM employee_qr 
+           WHERE employee_id = ? 
+           AND is_active = 0 
+           AND is_read = 0`,
+          [employeeId]
+        );
+
         connection.release();
 
         return res.status(200).json({
           success: true,
           data: records,
+          unreadCount: unreadCount[0]?.unread_count || 0,
+        });
+      } catch (dbError) {
+        if (connection) connection.release();
+        console.error('Database error:', dbError);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: dbError.message,
+        });
+      }
+    }
+
+    // MARK NOTIFICATION AS READ ENDPOINT
+    if (endpoint === 'mark-notification-read' && req.method === 'POST') {
+      const { qrId } = req.body;
+
+      if (!qrId) {
+        return res.status(400).json({
+          success: false,
+          message: 'QR ID is required',
+        });
+      }
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+
+        // Update is_read to 1 (read)
+        await connection.execute(
+          `UPDATE employee_qr SET is_read = 1 WHERE qr_id = ?`,
+          [qrId]
+        );
+
+        connection.release();
+
+        return res.status(200).json({
+          success: true,
+          message: 'Notification marked as read',
         });
       } catch (dbError) {
         if (connection) connection.release();
