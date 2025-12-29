@@ -56,17 +56,17 @@ export default function LoginScreen({ navigation }) {
         // Navigation will happen automatically via AuthContext
       }
     } catch (error) {
-      console.error('Login error:', error);
-      
       if (error.response) {
         // Check if account is deactivated
         if (error.response.data.accountDeactivated) {
           setDeactivatedEmployeeName(error.response.data.employeeName);
           setShowDeactivatedModal(true);
         } else {
+          console.error('Login error:', error);
           Alert.alert('Error', error.response.data.message || 'Login failed');
         }
       } else if (error.request) {
+        console.error('Login error:', error);
         Alert.alert('Error', 'Cannot connect to server. Please check your internet connection.');
       } else {
         Alert.alert('Error', 'Something went wrong. Please try again.');

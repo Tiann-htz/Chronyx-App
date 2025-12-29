@@ -69,14 +69,6 @@ export default function AccountDeactivatedModal({ visible, onClose, employeeName
               </View>
             </View>
 
-            {/* Contact Info */}
-            <View style={styles.contactBox}>
-              <Ionicons name="call" size={18} color="#64748b" />
-              <Text style={styles.contactText}>
-                Please contact the HR Department for assistance with account reactivation.
-              </Text>
-            </View>
-
             {/* Close Button */}
             <TouchableOpacity
               style={styles.closeButton}

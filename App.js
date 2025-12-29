@@ -9,12 +9,20 @@ import MyAccountScreen from './screens/MyAccountScreen';
 import SalaryScreen from './screens/SalaryScreen';
 import AttendanceScreen from './screens/AttendanceScreen';
 import NotificationScreen from './screens/NotificationScreen';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, StatusBar } from 'react-native';
+import { useState } from 'react';
 
 const Stack = createStackNavigator();
+import SplashScreen from './screens/SplashScreen';
 
 function AppNavigator() {
   const { user, loading } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Show splash screen first
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   if (loading) {
     return (
@@ -109,6 +117,7 @@ function AppNavigator() {
 export default function App() {
   return (
     <AuthProvider>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <AppNavigator />
     </AuthProvider>
   );
