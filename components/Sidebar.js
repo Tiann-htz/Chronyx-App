@@ -15,11 +15,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
-
 const API_URL = 'https://chronyx-app.vercel.app/api/chronyxApi';
 
 const { width } = Dimensions.get('window');
-const SIDEBAR_WIDTH = 280;
+const SIDEBAR_WIDTH = 300;
 
 export default function Sidebar({ visible, onClose, navigation, currentRoute }) {
   const { user, logout } = useAuth();
@@ -115,11 +114,11 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
   };
 
   const menuItems = [
-    { name: 'Home', icon: 'home', screen: 'Home' },
-    { name: 'Notifications', icon: 'notifications', screen: 'Notifications' },
-    { name: 'Profile', icon: 'person', screen: 'MyAccount' },
-    { name: 'Salary', icon: 'cash', screen: 'Salary' },
-    { name: 'Attendance', icon: 'calendar', screen: 'Attendance' },
+    { name: 'Home', icon: 'home', screen: 'Home', iconOutline: 'home-outline' },
+    { name: 'Notifications', icon: 'notifications', screen: 'Notifications', iconOutline: 'notifications-outline' },
+    { name: 'Profile', icon: 'person', screen: 'MyAccount', iconOutline: 'person-outline' },
+    { name: 'Salary', icon: 'cash', screen: 'Salary', iconOutline: 'cash-outline' },
+    { name: 'Attendance', icon: 'calendar', screen: 'Attendance', iconOutline: 'calendar-outline' },
   ];
 
   if (!isVisible && !visible) {
@@ -141,33 +140,45 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
             },
           ]}
         >
+          {/* Close Button */}
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close" size={28} color="#64748b" />
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.userContainer}>
-              <View style={styles.avatarWrapper}>
-                {user?.avatarUrl ? (
-                  <Image
-                    source={{ uri: user.avatarUrl }}
-                    style={styles.avatarImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <Text style={styles.avatarInitials}>{getInitials()}</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>
-                  {user?.firstName} {user?.lastName}
-                </Text>
-                <Text style={styles.userEmail}>{user?.email}</Text>
-              </View>
+            <View style={styles.avatarWrapper}>
+              {user?.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitials}>{getInitials()}</Text>
+                </View>
+              )}
+              <View style={styles.onlineIndicator} />
+            </View>
+            <Text style={styles.userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+            <View style={styles.employeeIdBadge}>
+              <Text style={styles.employeeIdText}>ID: {user?.id}</Text>
             </View>
           </View>
 
+          {/* Divider */}
+          <View style={styles.divider} />
+
           {/* Menu Items */}
-          <ScrollView style={styles.menuContainer}>
+          <ScrollView 
+            style={styles.menuContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.sectionTitle}>MENU</Text>
             {menuItems.map((item) => {
               const isActive = currentRoute === item.screen;
               const showBadge = item.screen === 'Notifications' && unreadNotifications > 0;
@@ -177,22 +188,29 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
                   key={item.screen}
                   style={[styles.menuItem, isActive && styles.menuItemActive]}
                   onPress={() => handleNavigate(item.screen)}
+                  activeOpacity={0.7}
                 >
+                  {isActive && <View style={styles.activeIndicator} />}
                   <View style={styles.menuIconContainer}>
                     <Ionicons
-                      name={item.icon}
-                      size={22}
-                      color={isActive ? '#1a365d' : '#64748b'}
+                      name={isActive ? item.icon : item.iconOutline}
+                      size={24}
+                      color={isActive ? '#0A6BA3' : '#64748b'}
                     />
-                    {showBadge && (
-                      <View style={styles.menuBadge}>
-                        <Text style={styles.menuBadgeText}>{unreadNotifications}</Text>
-                      </View>
-                    )}
                   </View>
                   <Text style={[styles.menuText, isActive && styles.menuTextActive]}>
                     {item.name}
                   </Text>
+                  {showBadge && (
+                    <View style={styles.menuBadge}>
+                      <Text style={styles.menuBadgeText}>
+                        {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                      </Text>
+                    </View>
+                  )}
+                  {isActive && (
+                    <Ionicons name="chevron-forward" size={20} color="#0A6BA3" />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -200,8 +218,14 @@ export default function Sidebar({ visible, onClose, navigation, currentRoute }) 
 
           {/* Footer */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#ffffff" />
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              onPress={handleLogout}
+              activeOpacity={0.8}
+            >
+              <View style={styles.logoutIconContainer}>
+                <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+              </View>
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
             <Text style={styles.version}>Version 1.0.0</Text>
@@ -222,7 +246,7 @@ const styles = StyleSheet.create({
   },
   overlayBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   sidebar: {
     position: 'absolute',
@@ -230,144 +254,202 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SIDEBAR_WIDTH,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FEFDFD',
     shadowColor: '#000',
     shadowOffset: {
-      width: 2,
+      width: 4,
       height: 0,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 45,
+    right: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
-    backgroundColor: '#0A6BA3',
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  userContainer: {
-    flexDirection: 'row',
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
     alignItems: 'center',
   },
   avatarWrapper: {
-    marginRight: 12,
+    position: 'relative',
+    marginBottom: 16,
   },
   avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#ffffff',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 4,
+    borderColor: '#0A6BA3',
   },
   avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#38aa62ff',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#0A6BA3',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#ffffff',
+    borderWidth: 4,
+    borderColor: '#0A7EB1',
   },
   avatarInitials: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '700',
     color: '#ffffff',
+    letterSpacing: 1,
   },
-  userInfo: {
-    flex: 1,
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#10b981',
+    borderWidth: 3,
+    borderColor: '#FEFDFD',
   },
   userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a365d',
     marginBottom: 4,
+    textAlign: 'center',
   },
   userEmail: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  employeeIdBadge: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  employeeIdText: {
     fontSize: 12,
-    color: '#cbd5e1',
+    fontWeight: '600',
+    color: '#0A6BA3',
+    letterSpacing: 0.5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 20,
+    marginBottom: 8,
   },
   menuContainer: {
     flex: 1,
-    paddingTop: 10,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94a3b8',
+    letterSpacing: 1.2,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginHorizontal: 10,
-    marginVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 2,
+    borderRadius: 12,
+    position: 'relative',
   },
   menuItemActive: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#e0f2fe',
   },
-  menuIcon: {
-    marginRight: 16,
+  activeIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: '20%',
+    bottom: '20%',
+    width: 4,
+    backgroundColor: '#0A6BA3',
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   menuText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
     color: '#64748b',
   },
   menuTextActive: {
-    color: '#1a365d',
+    color: '#0A6BA3',
+    fontWeight: '700',
+  },
+  menuBadge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    marginRight: 8,
+  },
+  menuBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
     fontWeight: '700',
   },
   footer: {
     padding: 20,
+    paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ce4a4aff',
+    backgroundColor: '#fff1f2',
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+  },
+  logoutIconContainer: {
+    marginRight: 8,
   },
   logoutText: {
-    color: '#ffffff',
+    color: '#ef4444',
     fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontWeight: '700',
   },
   version: {
     textAlign: 'center',
     color: '#94a3b8',
-    fontSize: 12,
-    marginTop: 5,
+    fontSize: 11,
+    fontWeight: '500',
   },
-
-  menuIconContainer: {
-    position: 'relative',
-    marginRight: 16,
-  },
-  menuBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#ef4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  menuBadgeText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-
 });

@@ -71,7 +71,7 @@ export default function AttendanceFilterModal({ visible, onClose, onApply, curre
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <Ionicons name="filter" size={20} color="#1a365d" />
+                <Ionicons name="filter" size={20} color="#0A6BA3" />
               </View>
               <Text style={styles.title}>Filter Attendance</Text>
             </View>
@@ -80,100 +80,107 @@ export default function AttendanceFilterModal({ visible, onClose, onApply, curre
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-            {/* Month Selection */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                <Ionicons name="calendar-outline" size={16} color="#1a365d" /> Month
-              </Text>
-              <View style={styles.optionsGrid}>
-                {months.map((month) => (
-                  <TouchableOpacity
-                    key={month.value}
-                    style={[
-                      styles.optionButton,
-                      selectedMonth === month.value && styles.optionButtonActive,
-                    ]}
-                    onPress={() => setSelectedMonth(month.value)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        selectedMonth === month.value && styles.optionTextActive,
-                      ]}
-                    >
-                      {month.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+          <ScrollView 
+  style={styles.body} 
+  contentContainerStyle={styles.bodyContent}
+  showsVerticalScrollIndicator={false}
+>
+  {/* Month Selection */}
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>
+      <Ionicons name="calendar-outline" size={16} color="#0A6BA3" /> Month
+    </Text>
+    <View style={styles.optionsGrid}>
+      {months.map((month) => (
+        <TouchableOpacity
+          key={month.value}
+          style={[
+            styles.optionButton,
+            selectedMonth === month.value && styles.optionButtonActive,
+          ]}
+          onPress={() => setSelectedMonth(month.value)}
+        >
+          <Text
+            style={[
+              styles.optionText,
+              selectedMonth === month.value && styles.optionTextActive,
+            ]}
+          >
+            {month.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
 
-            {/* Year Selection */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                <Ionicons name="calendar" size={16} color="#1a365d" /> Year
-              </Text>
-              <View style={styles.yearContainer}>
-                {years.map((year) => (
-                  <TouchableOpacity
-                    key={year}
-                    style={[
-                      styles.yearButton,
-                      selectedYear === year && styles.yearButtonActive,
-                    ]}
-                    onPress={() => setSelectedYear(year)}
-                  >
-                    <Text
-                      style={[
-                        styles.yearText,
-                        selectedYear === year && styles.yearTextActive,
-                      ]}
-                    >
-                      {year}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+  {/* Year Selection */}
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>
+      <Ionicons name="calendar" size={16} color="#0A6BA3" /> Year
+    </Text>
+    <View style={styles.yearContainer}>
+      {years.map((year) => (
+        <TouchableOpacity
+          key={year}
+          style={[
+            styles.yearButton,
+            selectedYear === year && styles.yearButtonActive,
+          ]}
+          onPress={() => setSelectedYear(year)}
+        >
+          <Text
+            style={[
+              styles.yearText,
+              selectedYear === year && styles.yearTextActive,
+            ]}
+          >
+            {year}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
 
-            {/* Status Selection */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                <Ionicons name="pulse-outline" size={16} color="#1a365d" /> Status
-              </Text>
-              <View style={styles.statusContainer}>
-                {statuses.map((status) => (
-                  <TouchableOpacity
-                    key={status.value}
-                    style={[
-                      styles.statusButton,
-                      selectedStatus === status.value && styles.statusButtonActive,
-                    ]}
-                    onPress={() => setSelectedStatus(status.value)}
-                  >
-                    <Ionicons
-                      name={status.icon}
-                      size={20}
-                      color={
-                        selectedStatus === status.value
-                          ? status.color
-                          : '#94a3b8'
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.statusText,
-                        selectedStatus === status.value && { color: status.color },
-                      ]}
-                    >
-                      {status.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </ScrollView>
+  {/* Status Selection */}
+  <View style={styles.section}>
+    <Text style={styles.sectionTitle}>
+      <Ionicons name="pulse-outline" size={16} color="#0A6BA3" /> Status
+    </Text>
+    <View style={styles.statusContainer}>
+      {statuses.map((status) => (
+        <TouchableOpacity
+          key={status.value}
+          style={[
+            styles.statusButton,
+            selectedStatus === status.value && styles.statusButtonActive,
+          ]}
+          onPress={() => setSelectedStatus(status.value)}
+        >
+          <Ionicons
+            name={status.icon}
+            size={20}
+            color={
+              selectedStatus === status.value
+                ? status.color
+                : '#94a3b8'
+            }
+          />
+          <Text
+            style={[
+              styles.statusText,
+              selectedStatus === status.value && { color: status.color },
+            ]}
+          >
+            {status.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+
+  {/* Bottom Spacer */}
+  <View style={styles.filterBottomSpacer} />
+</ScrollView>
 
           {/* Footer Actions */}
           <View style={styles.footer}>
@@ -200,7 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FEFDFD',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '85%',
@@ -211,17 +218,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#e2e8f0',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#dbeafe',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#e0f2fe',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -229,21 +236,27 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#1a365d',
   },
   closeButton: {
     padding: 4,
   },
   body: {
-    padding: 24,
-    maxHeight: 500,
-  },
+  padding: 24,
+  maxHeight: 500,
+},
+bodyContent: {
+  paddingBottom: 30,
+},
+filterBottomSpacer: {
+  height: 10,
+},
   section: {
     marginBottom: 28,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1a365d',
     marginBottom: 12,
   },
@@ -265,8 +278,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionButtonActive: {
-    backgroundColor: '#1a365d',
-    borderColor: '#1a365d',
+    backgroundColor: '#0A6BA3',
+    borderColor: '#0A6BA3',
   },
   optionText: {
     fontSize: 14,
@@ -290,12 +303,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   yearButtonActive: {
-    backgroundColor: '#1a365d',
-    borderColor: '#1a365d',
+    backgroundColor: '#0A6BA3',
+    borderColor: '#0A6BA3',
   },
   yearText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748b',
   },
   yearTextActive: {
@@ -329,8 +342,9 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#e2e8f0',
     gap: 12,
+    marginBottom: 30
   },
   resetButton: {
     flex: 1,
@@ -345,7 +359,7 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748b',
     marginLeft: 8,
   },
@@ -354,10 +368,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a365d',
+    backgroundColor: '#0A6BA3',
     borderRadius: 12,
     paddingVertical: 14,
-    shadowColor: '#1a365d',
+    shadowColor: '#0A6BA3',
     shadowOffset: {
       width: 0,
       height: 4,

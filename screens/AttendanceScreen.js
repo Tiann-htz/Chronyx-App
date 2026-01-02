@@ -22,7 +22,7 @@ export default function AttendanceScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [attendanceHistory, setAttendanceHistory] = useState([]);
- const [monthlySummary, setMonthlySummary] = useState(null);
+  const [monthlySummary, setMonthlySummary] = useState(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Filter state - now mutable
@@ -46,8 +46,7 @@ export default function AttendanceScreen({ navigation }) {
     fetchAttendanceData();
   }, [navigation]);
 
-
-   // Add useEffect to refetch when filters change
+  // Add useEffect to refetch when filters change
   useEffect(() => {
     if (!loading) {
       fetchAttendanceData();
@@ -205,8 +204,6 @@ export default function AttendanceScreen({ navigation }) {
     // Fetch new data will be triggered by useEffect
   };
 
- 
-
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -219,44 +216,57 @@ export default function AttendanceScreen({ navigation }) {
           {/* Monthly Summary Card */}
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
+              <View style={styles.summaryIconContainer}>
+                <Ionicons name="calendar" size={24} color="#0A6BA3" />
+              </View>
               <View style={styles.summaryTitleContainer}>
-                <Ionicons name="calendar" size={24} color="#1a365d" />
                 <Text style={styles.summaryTitle}>{getMonthName()} Summary</Text>
               </View>
             </View>
 
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color="#1a365d" size="large" />
+                <ActivityIndicator color="#0A6BA3" size="large" />
               </View>
             ) : monthlySummary ? (
               <View style={styles.statsGrid}>
                 <View style={styles.statBox}>
-                  <Ionicons name="checkmark-circle" size={32} color="#10b981" />
+                  <View style={[styles.statIconContainer, { backgroundColor: '#10b98110' }]}>
+                    <Ionicons name="checkmark-circle" size={32} color="#10b981" />
+                  </View>
                   <Text style={styles.statValue}>{monthlySummary.totalDaysPresent}</Text>
                   <Text style={styles.statLabel}>Days Present</Text>
                 </View>
 
                 <View style={styles.statBox}>
-                  <Ionicons name="time" size={32} color="#3b82f6" />
+                  <View style={[styles.statIconContainer, { backgroundColor: '#3b82f610' }]}>
+                    <Ionicons name="time" size={32} color="#3b82f6" />
+                  </View>
                   <Text style={styles.statValue}>{monthlySummary.totalHours}</Text>
                   <Text style={styles.statLabel}>Total Hours</Text>
                 </View>
 
                 <View style={styles.statBox}>
-                  <Ionicons name="alert-circle" size={32} color="#ef4444" />
+                  <View style={[styles.statIconContainer, { backgroundColor: '#ef444410' }]}>
+                    <Ionicons name="alert-circle" size={32} color="#ef4444" />
+                  </View>
                   <Text style={styles.statValue}>{monthlySummary.totalLate}</Text>
                   <Text style={styles.statLabel}>Late Count</Text>
                 </View>
 
                 <View style={styles.statBox}>
-                  <Ionicons name="trending-up" size={32} color="#f59e0b" />
+                  <View style={[styles.statIconContainer, { backgroundColor: '#f59e0b10' }]}>
+                    <Ionicons name="trending-up" size={32} color="#f59e0b" />
+                  </View>
                   <Text style={styles.statValue}>{monthlySummary.totalOvertime}</Text>
                   <Text style={styles.statLabel}>Overtime</Text>
                 </View>
               </View>
             ) : (
               <View style={styles.noDataContainer}>
+                <View style={styles.noDataIconContainer}>
+                  <Ionicons name="bar-chart-outline" size={48} color="#cbd5e1" />
+                </View>
                 <Text style={styles.noDataText}>No summary available</Text>
               </View>
             )}
@@ -264,12 +274,15 @@ export default function AttendanceScreen({ navigation }) {
 
           {/* Attendance History Header */}
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Attendance History</Text>
+            <View style={styles.historyHeaderLeft}>
+              <Ionicons name="time-outline" size={22} color="#1a365d" />
+              <Text style={styles.historyTitle}>Attendance History</Text>
+            </View>
             <TouchableOpacity 
               style={styles.filterButton}
               onPress={() => setShowFilterModal(true)}
             >
-              <Ionicons name="filter" size={20} color="#1a365d" />
+              <Ionicons name="filter" size={20} color="#0A6BA3" />
               <Text style={styles.filterButtonText}>Filter</Text>
             </TouchableOpacity>
           </View>
@@ -277,7 +290,7 @@ export default function AttendanceScreen({ navigation }) {
           {/* Attendance History List */}
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator color="#1a365d" size="large" />
+              <ActivityIndicator color="#0A6BA3" size="large" />
             </View>
           ) : sortedAttendance.length > 0 ? (
             sortedAttendance.map((record, index) => {
@@ -288,7 +301,9 @@ export default function AttendanceScreen({ navigation }) {
                 <View key={index} style={styles.attendanceCard}>
                   {/* Date Header */}
                   <View style={styles.dateHeader}>
-                    <Ionicons name="calendar-outline" size={18} color="#64748b" />
+                    <View style={styles.dateIconContainer}>
+                      <Ionicons name="calendar-outline" size={18} color="#0A6BA3" />
+                    </View>
                     <Text style={styles.dateText}>{formatDate(record.date)}</Text>
                   </View>
 
@@ -296,7 +311,9 @@ export default function AttendanceScreen({ navigation }) {
                   <View style={styles.timeDetailsContainer}>
                     <View style={styles.timeRow}>
                       <View style={styles.timeItem}>
-                        <Ionicons name="log-in-outline" size={20} color="#10b981" />
+                        <View style={styles.timeIconWrapper}>
+                          <Ionicons name="log-in" size={20} color="#10b981" />
+                        </View>
                         <View style={styles.timeTextContainer}>
                           <Text style={styles.timeLabel}>Time In</Text>
                           <Text style={styles.timeValue}>{formatTime(record.timeIn)}</Text>
@@ -304,7 +321,9 @@ export default function AttendanceScreen({ navigation }) {
                       </View>
 
                       <View style={styles.timeItem}>
-                        <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+                        <View style={styles.timeIconWrapper}>
+                          <Ionicons name="log-out" size={20} color="#ef4444" />
+                        </View>
                         <View style={styles.timeTextContainer}>
                           <Text style={styles.timeLabel}>Time Out</Text>
                           <Text style={styles.timeValue}>
@@ -316,19 +335,24 @@ export default function AttendanceScreen({ navigation }) {
 
                     {/* Hours Worked */}
                     <View style={styles.hoursContainer}>
-                      <Ionicons name="hourglass-outline" size={18} color="#64748b" />
+                      <View style={styles.hoursIconWrapper}>
+                        <Ionicons name="timer" size={18} color="#0A6BA3" />
+                      </View>
                       <Text style={styles.hoursText}>
-                        {record.timeOut ? `${hoursWorked} hours` : 'Incomplete'}
+                        {record.timeOut ? `${hoursWorked} hours worked` : 'Incomplete'}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Status Badge */}
-                  <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-                    <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
-                    <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                      {statusConfig.label}
-                    </Text>
+                  {/* Status and Additional Info Row */}
+                  <View style={styles.statusRow}>
+                    {/* Status Badge */}
+                    <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                      <Ionicons name={statusConfig.icon} size={16} color={statusConfig.color} />
+                      <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                        {statusConfig.label}
+                      </Text>
+                    </View>
                   </View>
 
                   {/* Additional Info (Late/Overtime/Undertime) */}
@@ -338,7 +362,7 @@ export default function AttendanceScreen({ navigation }) {
                     <View style={styles.additionalInfo}>
                       {record.late_minutes > 0 && (
                         <View style={styles.infoItem}>
-                          <Ionicons name="alert-circle-outline" size={14} color="#ef4444" />
+                          <Ionicons name="alert-circle" size={14} color="#ef4444" />
                           <Text style={styles.infoText}>
                             Late: {record.late_minutes} min
                           </Text>
@@ -346,7 +370,7 @@ export default function AttendanceScreen({ navigation }) {
                       )}
                       {record.overtime_minutes > 0 && (
                         <View style={styles.infoItem}>
-                          <Ionicons name="time-outline" size={14} color="#3b82f6" />
+                          <Ionicons name="time" size={14} color="#3b82f6" />
                           <Text style={styles.infoText}>
                             OT: {record.overtime_minutes} min
                           </Text>
@@ -367,13 +391,18 @@ export default function AttendanceScreen({ navigation }) {
             })
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="calendar-outline" size={64} color="#cbd5e1" />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="calendar-outline" size={64} color="#cbd5e1" />
+              </View>
               <Text style={styles.emptyTitle}>No Attendance Records</Text>
               <Text style={styles.emptyText}>
                 Your attendance records for {getMonthName()} will appear here
               </Text>
             </View>
           )}
+
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
 
@@ -401,7 +430,7 @@ export default function AttendanceScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f1f5f9',
   },
   scrollView: {
     flex: 1,
@@ -413,33 +442,40 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   summaryCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: '#FEFDFD',
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1a365d',
+    shadowRadius: 8,
+    elevation: 5,
   },
   summaryHeader: {
-    marginBottom: 16,
-  },
-  summaryTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  summaryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#e0f2fe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  summaryTitleContainer: {
+    flex: 1,
   },
   summaryTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1a365d',
-    marginLeft: 12,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -449,23 +485,32 @@ const styles = StyleSheet.create({
   statBox: {
     width: '48%',
     backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  statIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
   statValue: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1a365d',
-    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     color: '#64748b',
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   historyHeader: {
     flexDirection: 'row',
@@ -473,62 +518,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  historyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a365d',
+  historyHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-
   historyTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1a365d',
+    marginLeft: 8,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    backgroundColor: '#e0f2fe',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   filterButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1a365d',
+    fontWeight: '700',
+    color: '#0A6BA3',
     marginLeft: 6,
   },
-  
   attendanceCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FEFDFD',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 18,
+    marginBottom: 14,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   dateHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#e2e8f0',
+  },
+  dateIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#e0f2fe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   dateText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1a365d',
-    marginLeft: 8,
   },
   timeDetailsContainer: {
-    marginBottom: 12,
+    marginBottom: 14,
   },
   timeRow: {
     flexDirection: 'row',
@@ -539,93 +590,151 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 4,
+  },
+  timeIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
   },
   timeTextContainer: {
-    marginLeft: 8,
+    flex: 1,
   },
   timeLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
     marginBottom: 2,
+    fontWeight: '500',
   },
   timeValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1a365d',
   },
   hoursContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  hoursIconWrapper: {
+    marginRight: 10,
   },
   hoursText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
-    marginLeft: 8,
+    fontWeight: '700',
+    color: '#0A6BA3',
+  },
+  statusRow: {
+    marginBottom: 8,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 8,
   },
   statusText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 6,
   },
   additionalInfo: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 12,
     marginTop: 4,
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginRight: 8,
     marginBottom: 4,
   },
   infoText: {
     fontSize: 12,
     color: '#64748b',
-    marginLeft: 4,
+    marginLeft: 6,
+    fontWeight: '600',
   },
   loadingContainer: {
     paddingVertical: 40,
     alignItems: 'center',
   },
   noDataContainer: {
-    paddingVertical: 20,
+    paddingVertical: 40,
     alignItems: 'center',
+  },
+  noDataIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   noDataText: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: '#64748b',
+    fontWeight: '600',
   },
   emptyContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: '#FEFDFD',
+    borderRadius: 20,
     padding: 40,
     alignItems: 'center',
     marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748b',
-    marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
     color: '#94a3b8',
     textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  bottomSpacer: {
+    height: 40,
   },
 });

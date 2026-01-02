@@ -203,7 +203,7 @@ export default function SignupScreen({ navigation }) {
                   style={styles.eyeIcon}
                 >
                   <Ionicons 
-                    name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
                     size={20} 
                     color="#A0AEC0" 
                   />
@@ -226,7 +226,7 @@ export default function SignupScreen({ navigation }) {
                   style={styles.eyeIcon}
                 >
                   <Ionicons 
-                    name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} 
+                    name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}  
                     size={20} 
                     color="#A0AEC0" 
                   />

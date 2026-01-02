@@ -154,7 +154,7 @@ export default function SalaryScreen({ navigation }) {
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderLeft}>
                 <View style={styles.iconCircle}>
-                  <Ionicons name="wallet" size={24} color="#1a365d" />
+                  <Ionicons name="wallet" size={24} color="#0A6BA3" />
                 </View>
                 <Text style={styles.cardTitle}>Current Pay Period</Text>
               </View>
@@ -162,12 +162,14 @@ export default function SalaryScreen({ navigation }) {
 
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator color="#1a365d" size="large" />
+                <ActivityIndicator color="#0A6BA3" size="large" />
               </View>
             ) : currentPeriod ? (
               <>
                 <View style={styles.periodDates}>
-                  <Ionicons name="calendar-outline" size={18} color="#64748b" />
+                  <View style={styles.dateIconWrapper}>
+                    <Ionicons name="calendar-outline" size={18} color="#0A6BA3" />
+                  </View>
                   <Text style={styles.periodText}>
                     {formatDate(currentPeriod.period_start)} - {formatDate(currentPeriod.period_end)}
                   </Text>
@@ -175,14 +177,20 @@ export default function SalaryScreen({ navigation }) {
 
                 <View style={styles.salaryBreakdown}>
                   <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Total Hours</Text>
+                    <View style={styles.breakdownLabelContainer}>
+                      <Ionicons name="time-outline" size={16} color="#64748b" />
+                      <Text style={styles.breakdownLabel}>Total Hours</Text>
+                    </View>
                     <Text style={styles.breakdownValue}>
                       {parseFloat(currentPeriod.total_hours).toFixed(2)} hrs
                     </Text>
                   </View>
 
                   <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Hourly Rate</Text>
+                    <View style={styles.breakdownLabelContainer}>
+                      <Ionicons name="cash-outline" size={16} color="#64748b" />
+                      <Text style={styles.breakdownLabel}>Hourly Rate</Text>
+                    </View>
                     <Text style={styles.breakdownValue}>
                       {formatCurrency(currentPeriod.hourly_rate)}
                     </Text>
@@ -191,14 +199,20 @@ export default function SalaryScreen({ navigation }) {
                   <View style={styles.divider} />
 
                   <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Gross Salary</Text>
+                    <View style={styles.breakdownLabelContainer}>
+                      <Ionicons name="trending-up-outline" size={16} color="#10b981" />
+                      <Text style={styles.breakdownLabel}>Gross Salary</Text>
+                    </View>
                     <Text style={styles.breakdownValue}>
                       {formatCurrency(currentPeriod.gross_salary)}
                     </Text>
                   </View>
 
                   <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownLabel}>Deductions</Text>
+                    <View style={styles.breakdownLabelContainer}>
+                      <Ionicons name="trending-down-outline" size={16} color="#ef4444" />
+                      <Text style={styles.breakdownLabel}>Deductions</Text>
+                    </View>
                     <Text style={[styles.breakdownValue, styles.deductionText]}>
                       - {formatCurrency(currentPeriod.deductions)}
                     </Text>
@@ -207,10 +221,15 @@ export default function SalaryScreen({ navigation }) {
                   <View style={styles.divider} />
 
                   <View style={[styles.breakdownRow, styles.netSalaryRow]}>
-                    <Text style={styles.netSalaryLabel}>Net Salary</Text>
-                    <Text style={styles.netSalaryValue}>
-                      {formatCurrency(currentPeriod.net_salary)}
-                    </Text>
+                    <View style={styles.netSalaryIconContainer}>
+                      <Ionicons name="wallet" size={20} color="#10b981" />
+                    </View>
+                    <View style={styles.netSalaryContent}>
+                      <Text style={styles.netSalaryLabel}>Net Salary</Text>
+                      <Text style={styles.netSalaryValue}>
+                        {formatCurrency(currentPeriod.net_salary)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -220,7 +239,9 @@ export default function SalaryScreen({ navigation }) {
               </>
             ) : (
               <View style={styles.noDataContainer}>
-                <Ionicons name="wallet-outline" size={48} color="#cbd5e1" />
+                <View style={styles.noDataIconContainer}>
+                  <Ionicons name="wallet-outline" size={48} color="#cbd5e1" />
+                </View>
                 <Text style={styles.noDataText}>No current pay period data</Text>
                 <Text style={styles.noDataSubtext}>
                   Your salary information will appear here once calculated
@@ -231,13 +252,21 @@ export default function SalaryScreen({ navigation }) {
 
           {/* Salary History Header */}
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Salary History</Text>
+            <View style={styles.historyHeaderContent}>
+              <Ionicons name="time-outline" size={22} color="#1a365d" />
+              <Text style={styles.historyTitle}>Salary History</Text>
+            </View>
+            {salaryHistory.length > 0 && (
+              <View style={styles.historyCount}>
+                <Text style={styles.historyCountText}>{salaryHistory.length}</Text>
+              </View>
+            )}
           </View>
 
           {/* Salary History List */}
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator color="#1a365d" size="large" />
+              <ActivityIndicator color="#0A6BA3" size="large" />
             </View>
           ) : salaryHistory.length > 0 ? (
             salaryHistory.map((record) => {
@@ -246,14 +275,19 @@ export default function SalaryScreen({ navigation }) {
               return (
                 <TouchableOpacity
                   key={record.payroll_id}
-                  style={styles.historyCard}
+                  style={[
+                    styles.historyCard,
+                    isExpanded && styles.historyCardExpanded
+                  ]}
                   onPress={() => togglePeriod(record.payroll_id)}
                   activeOpacity={0.7}
                 >
                   {/* Period Header */}
                   <View style={styles.historyCardHeader}>
                     <View style={styles.historyCardLeft}>
-                      <Ionicons name="calendar" size={20} color="#1a365d" />
+                      <View style={styles.historyIconContainer}>
+                        <Ionicons name="calendar" size={20} color="#0A6BA3" />
+                      </View>
                       <View style={styles.historyCardInfo}>
                         <Text style={styles.historyPeriod}>
                           {formatDate(record.period_start)} - {formatDate(record.period_end)}
@@ -264,11 +298,15 @@ export default function SalaryScreen({ navigation }) {
                       </View>
                     </View>
 
-                    <Ionicons 
-                      name={isExpanded ? 'chevron-up' : 'chevron-down'} 
-                      size={24} 
-                      color="#94a3b8" 
-                    />
+                    <View style={styles.historyCardRight}>
+                      <View style={styles.expandIconContainer}>
+                        <Ionicons 
+                          name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+                          size={24} 
+                          color="#0A6BA3" 
+                        />
+                      </View>
+                    </View>
                   </View>
 
                   {/* Status */}
@@ -279,45 +317,64 @@ export default function SalaryScreen({ navigation }) {
                   {/* Expanded Details */}
                   {isExpanded && (
                     <View style={styles.expandedDetails}>
-                      <View style={styles.divider} />
+                      <View style={styles.dividerExpanded} />
                       
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Total Hours</Text>
-                        <Text style={styles.detailValue}>
-                          {parseFloat(record.total_hours).toFixed(2)} hrs
-                        </Text>
-                      </View>
+                      <View style={styles.detailSection}>
+                        <View style={styles.detailRow}>
+                          <View style={styles.detailLabelContainer}>
+                            <Ionicons name="time-outline" size={16} color="#64748b" />
+                            <Text style={styles.detailLabel}>Total Hours</Text>
+                          </View>
+                          <Text style={styles.detailValue}>
+                            {parseFloat(record.total_hours).toFixed(2)} hrs
+                          </Text>
+                        </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Hourly Rate</Text>
-                        <Text style={styles.detailValue}>
-                          {formatCurrency(record.hourly_rate)}
-                        </Text>
-                      </View>
+                        <View style={styles.detailRow}>
+                          <View style={styles.detailLabelContainer}>
+                            <Ionicons name="cash-outline" size={16} color="#64748b" />
+                            <Text style={styles.detailLabel}>Hourly Rate</Text>
+                          </View>
+                          <Text style={styles.detailValue}>
+                            {formatCurrency(record.hourly_rate)}
+                          </Text>
+                        </View>
 
-                      <View style={styles.divider} />
+                        <View style={styles.detailDivider} />
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Gross Salary</Text>
-                        <Text style={styles.detailValue}>
-                          {formatCurrency(record.gross_salary)}
-                        </Text>
-                      </View>
+                        <View style={styles.detailRow}>
+                          <View style={styles.detailLabelContainer}>
+                            <Ionicons name="trending-up-outline" size={16} color="#10b981" />
+                            <Text style={styles.detailLabel}>Gross Salary</Text>
+                          </View>
+                          <Text style={styles.detailValue}>
+                            {formatCurrency(record.gross_salary)}
+                          </Text>
+                        </View>
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Deductions</Text>
-                        <Text style={[styles.detailValue, styles.deductionText]}>
-                          - {formatCurrency(record.deductions)}
-                        </Text>
-                      </View>
+                        <View style={styles.detailRow}>
+                          <View style={styles.detailLabelContainer}>
+                            <Ionicons name="trending-down-outline" size={16} color="#ef4444" />
+                            <Text style={styles.detailLabel}>Deductions</Text>
+                          </View>
+                          <Text style={[styles.detailValue, styles.deductionText]}>
+                            - {formatCurrency(record.deductions)}
+                          </Text>
+                        </View>
 
-                      <View style={styles.divider} />
+                        <View style={styles.detailDivider} />
 
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabelBold}>Net Salary</Text>
-                        <Text style={styles.detailValueBold}>
-                          {formatCurrency(record.net_salary)}
-                        </Text>
+                        <View style={styles.netSalaryDetailRow}>
+                          <View style={styles.netSalaryDetailIcon}>
+                            <Ionicons name="wallet" size={18} color="#10b981" />
+                          </View>
+                          <View style={styles.netSalaryDetailContent}>
+                            <Text style={styles.detailLabelBold}>Net Salary</Text>
+                            <Text style={styles.detailValueBold}>
+                              {formatCurrency(record.net_salary)}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   )}
@@ -326,13 +383,18 @@ export default function SalaryScreen({ navigation }) {
             })
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="receipt-outline" size={64} color="#cbd5e1" />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="receipt-outline" size={64} color="#cbd5e1" />
+              </View>
               <Text style={styles.emptyTitle}>No Salary History</Text>
               <Text style={styles.emptyText}>
                 Your salary records will appear here once processed
               </Text>
             </View>
           )}
+
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
 
@@ -349,7 +411,7 @@ export default function SalaryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f1f5f9',
   },
   scrollView: {
     flex: 1,
@@ -361,36 +423,34 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   currentPeriodCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: '#FEFDFD',
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1a365d',
+    shadowRadius: 8,
+    elevation: 5,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#dbeafe',
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#e0f2fe',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -403,17 +463,21 @@ const styles = StyleSheet.create({
   periodDates: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  dateIconWrapper: {
+    marginRight: 10,
   },
   periodText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748b',
-    marginLeft: 8,
+    color: '#1a365d',
   },
   salaryBreakdown: {
     marginBottom: 16,
@@ -422,32 +486,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
+  },
+  breakdownLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   breakdownLabel: {
     fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
+    marginLeft: 8,
   },
   breakdownValue: {
     fontSize: 15,
     color: '#1a365d',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   deductionText: {
     color: '#ef4444',
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#e2e8f0',
     marginVertical: 8,
   },
   netSalaryRow: {
-    backgroundColor: '#f8fafc',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginTop: 4,
+    backgroundColor: '#f0fdf4',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  netSalaryIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  netSalaryContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   netSalaryLabel: {
     fontSize: 16,
@@ -455,68 +543,102 @@ const styles = StyleSheet.create({
     color: '#1a365d',
   },
   netSalaryValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: '#10b981',
   },
   statusContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: 12,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 20,
   },
   statusText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 6,
   },
   historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
+  },
+  historyHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   historyTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1a365d',
+    marginLeft: 8,
+  },
+  historyCount: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  historyCountText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0A6BA3',
   },
   historyCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FEFDFD',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    padding: 18,
+    marginBottom: 14,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  historyCardExpanded: {
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#e0f2fe',
   },
   historyCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   historyCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+  historyIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#e0f2fe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   historyCardInfo: {
-    marginLeft: 12,
     flex: 1,
   },
   historyPeriod: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
-    marginBottom: 4,
+    marginBottom: 6,
     fontWeight: '500',
   },
   historyAmount: {
@@ -524,28 +646,85 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1a365d',
   },
+  historyCardRight: {
+    marginLeft: 8,
+  },
+  expandIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   historyStatus: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
   expandedDetails: {
-    marginTop: 8,
+    marginTop: 16,
+  },
+  dividerExpanded: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginBottom: 16,
+  },
+  detailSection: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
+  },
+  detailLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   detailLabel: {
     fontSize: 13,
     color: '#64748b',
     fontWeight: '500',
+    marginLeft: 8,
   },
   detailValue: {
     fontSize: 14,
     color: '#1a365d',
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  detailDivider: {
+    height: 1,
+    backgroundColor: '#e2e8f0',
+    marginVertical: 8,
+  },
+  netSalaryDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  netSalaryDetailIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  netSalaryDetailContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   detailLabelBold: {
     fontSize: 15,
@@ -553,7 +732,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   detailValueBold: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#10b981',
     fontWeight: '700',
   },
@@ -562,38 +741,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataContainer: {
-    paddingVertical: 32,
+    paddingVertical: 40,
     alignItems: 'center',
+  },
+  noDataIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   noDataText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#64748b',
-    marginTop: 12,
+    marginBottom: 4,
   },
   noDataSubtext: {
     fontSize: 14,
     color: '#94a3b8',
-    marginTop: 4,
     textAlign: 'center',
+    paddingHorizontal: 20,
   },
   emptyContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: '#FEFDFD',
+    borderRadius: 20,
     padding: 40,
     alignItems: 'center',
     marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748b',
-    marginTop: 16,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
     color: '#94a3b8',
     textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  bottomSpacer: {
+    height: 40,
   },
 });
